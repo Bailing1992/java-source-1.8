@@ -1373,8 +1373,8 @@ public final class Integer extends Number implements Comparable<Integer> {
     }
 
     /**
-     * Returns the number of zero bits preceding the highest-order
-     * ("leftmost") one-bit in the two's complement binary representation
+     * Returns the number of zero bits preceding 在前的；前述的 the highest-order
+     * ("leftmost") one-bit in the two's complement 补足，补助 binary representation
      * of the specified {@code int} value.  Returns 32 if the
      * specified value has no one-bits in its two's complement representation,
      * in other words if it is equal to zero.
@@ -1393,17 +1393,38 @@ public final class Integer extends Number implements Comparable<Integer> {
      *     is equal to zero.
      * @since 1.5
      */
+
+    // 在指定 int 值的二进制补码表示形式中最高位（最左边）的 1 位之前，返回零位的数量;
+    // 如果指定值在其二进制补码表示形式中不存在 1 位，换句话说，如果它等于零，则返回 32。
+    // 应用了典型的二分查找，先把32位整形分为高16位和低16位查找非零数，在对高16位进行或低16位进行二分
+    // 首先在jvm中一个int类型的数据占4个字节，共32位，其实就相当于一个长度为32的数组。
+    // 那我们要计算首部0的个数，就是从左边第一个位开始累加0的个数，直到遇到一个非零值。
     public static int numberOfLeadingZeros(int i) {
         // HD, Figure 5-6
         if (i == 0)
             return 32;
         int n = 1;
+        // 下面的代码就是定位从左边开始第一个非零值的位置，在定位过程中顺便累加从左边开始0的个数
+        // 将i无符号右移16位后，有二种情况；
+        //   情况1.i=0,则第一个非零值位于低16位，i至少有16个0，同时将i左移16位（把低16位移到原高16位的位置，这样情况1和情况2就能统一后续的判断方式）
+        //   情况2.i!=0,则第一个非零值位于高16位，后续在高16位中继续判断
+        // 这个思路就是二分查找，首先把32位的数分为高低16位，如果非零值位于高16位，后续再将高16位继续二分为高低8位，一直二分到集合中只有1个元素
         if (i >>> 16 == 0) { n += 16; i <<= 16; }
+        // 判断第一个非零值是否位于高8位
         if (i >>> 24 == 0) { n +=  8; i <<=  8; }
+        // 判断第一个非零值是否位于高4位
         if (i >>> 28 == 0) { n +=  4; i <<=  4; }
+        // 判断第一个非零值是否位于高2位
         if (i >>> 30 == 0) { n +=  2; i <<=  2; }
+        // 判断第一个非零值是否位于左边第一位
         n -= i >>> 31;
         return n;
+
+        // 00000001 11000000 00000000 00000000
+        // 00000000 00000000 00000001 11000000
+        // 00000000 00000000 00000000 00000001
+        // 11000000 00000000 00000000 00000000
+
     }
 
     /**

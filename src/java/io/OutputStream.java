@@ -59,6 +59,8 @@ public abstract class OutputStream implements Closeable, Flushable {
      *             an <code>IOException</code> may be thrown if the
      *             output stream has been closed.
      */
+    // 将字节b写入到“输出流”中。
+    // 它在子类中实现！
     public abstract void write(int b) throws IOException;
 
     /**
@@ -71,6 +73,7 @@ public abstract class OutputStream implements Closeable, Flushable {
      * @exception  IOException  if an I/O error occurs.
      * @see        java.io.OutputStream#write(byte[], int, int)
      */
+    // 写入字节数组b到“字节数组输出流”中。
     public void write(byte b[]) throws IOException {
         write(b, 0, b.length);
     }
@@ -103,6 +106,7 @@ public abstract class OutputStream implements Closeable, Flushable {
      *             an <code>IOException</code> is thrown if the output
      *             stream is closed.
      */
+    // 写入字节数组b到“字节数组输出流”中，并且off是“数组b的起始位置”，len是写入的长度
     public void write(byte b[], int off, int len) throws IOException {
         if (b == null) {
             throw new NullPointerException();

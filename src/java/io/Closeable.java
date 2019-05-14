@@ -34,6 +34,7 @@ import java.io.IOException;
  *
  * @since 1.5
  */
+//
 public interface Closeable extends AutoCloseable {
 
     /**

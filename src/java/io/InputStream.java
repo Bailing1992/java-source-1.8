@@ -46,6 +46,7 @@ public abstract class InputStream implements Closeable {
 
     // MAX_SKIP_BUFFER_SIZE is used to determine the maximum buffer size to
     // use when skipping.
+    // 能skip的大小
     private static final int MAX_SKIP_BUFFER_SIZE = 2048;
 
     /**
@@ -62,6 +63,7 @@ public abstract class InputStream implements Closeable {
      *             stream is reached.
      * @exception  IOException  if an I/O error occurs.
      */
+    // 从输入流中读取数据的下一个字节。
     public abstract int read() throws IOException;
 
     /**
@@ -97,6 +99,7 @@ public abstract class InputStream implements Closeable {
      * @exception  NullPointerException  if <code>b</code> is <code>null</code>.
      * @see        java.io.InputStream#read(byte[], int, int)
      */
+    // 将数据从输入流读入 byte 数组。
     public int read(byte b[]) throws IOException {
         return read(b, 0, b.length);
     }
@@ -158,6 +161,7 @@ public abstract class InputStream implements Closeable {
      * <code>b.length - off</code>
      * @see        java.io.InputStream#read()
      */
+    // 将最多 len 个数据字节从此输入流读入 byte 数组。
     public int read(byte b[], int off, int len) throws IOException {
         if (b == null) {
             throw new NullPointerException();
@@ -209,6 +213,7 @@ public abstract class InputStream implements Closeable {
      * @exception  IOException  if the stream does not support seek,
      *                          or if some other I/O error occurs.
      */
+    // 跳过输入流中的n个字节
     public long skip(long n) throws IOException {
 
         long remaining = n;

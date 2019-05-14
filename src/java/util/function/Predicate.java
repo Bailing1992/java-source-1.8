@@ -40,7 +40,7 @@ import java.util.Objects;
 public interface Predicate<T> {
 
     /**
-     * Evaluates this predicate on the given argument.
+     * Evaluates 评价 this predicate 断言 on the given argument.
      *
      * @param t the input argument
      * @return {@code true} if the input argument matches the predicate,

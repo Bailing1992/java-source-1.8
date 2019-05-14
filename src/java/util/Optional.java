@@ -86,6 +86,7 @@ public final class Optional<T> {
         return t;
     }
 
+
     /**
      * Constructs an instance with the value present.
      *
@@ -98,7 +99,8 @@ public final class Optional<T> {
 
     /**
      * Returns an {@code Optional} with the specified present non-null value.
-     *
+     *  为非null的值创建一个Optional;
+     *  of 方法通过工厂方法创建Optional类。需要注意的是，创建对象时传入的参数不能为null。如果传入参数为null，则抛出NullPointerException 。
      * @param <T> the class of the value
      * @param value the value to be present, which must be non-null
      * @return an {@code Optional} with the value present
@@ -112,6 +114,9 @@ public final class Optional<T> {
      * Returns an {@code Optional} describing the specified value, if non-null,
      * otherwise returns an empty {@code Optional}.
      *
+     * 为指定的值创建一个Optional，如果指定的值为null，则返回一个空的Optional。
+     * ofNullable与of方法相似，唯一的区别是可以接受参数为null的情况;
+     *
      * @param <T> the class of the value
      * @param value the possibly-null value to describe
      * @return an {@code Optional} with a present value if the specified value
@@ -124,6 +129,8 @@ public final class Optional<T> {
     /**
      * If a value is present in this {@code Optional}, returns the value,
      * otherwise throws {@code NoSuchElementException}.
+     *
+     *  如果Optional有值则将其返回，否则抛出NoSuchElementException。
      *
      * @return the non-null value held by this {@code Optional}
      * @throws NoSuchElementException if there is no value present
@@ -141,6 +148,10 @@ public final class Optional<T> {
      * Return {@code true} if there is a value present, otherwise {@code false}.
      *
      * @return {@code true} if there is a value present, otherwise {@code false}
+     *
+     * 如果值存在返回true，否则返回false。
+     *
+     * //isPresent方法用来检查Optional实例中是否包含值
      */
     public boolean isPresent() {
         return value != null;
@@ -149,7 +160,7 @@ public final class Optional<T> {
     /**
      * If a value is present, invoke the specified consumer with the value,
      * otherwise do nothing.
-     *
+     * 如果Optional实例有值则为其调用consumer，否则不做处理
      * @param consumer block to be executed if a value is present
      * @throws NullPointerException if value is present and {@code consumer} is
      * null
@@ -170,6 +181,7 @@ public final class Optional<T> {
      * otherwise an empty {@code Optional}
      * @throws NullPointerException if the predicate is null
      */
+    //如果有值并且满足断言条件返回包含该值的Optional，否则返回空Optional。
     public Optional<T> filter(Predicate<? super T> predicate) {
         Objects.requireNonNull(predicate);
         if (!isPresent())
@@ -212,6 +224,9 @@ public final class Optional<T> {
         if (!isPresent())
             return empty();
         else {
+            // 如果有值，则对其执行调用mapping函数得到返回值
+            // map方法用来对Optional实例的值执行一系列操作。
+            // 通过一组实现了Function接口的lambda表达式传入操作
             return Optional.ofNullable(mapper.apply(value));
         }
     }

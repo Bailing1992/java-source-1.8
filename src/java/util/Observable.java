@@ -63,7 +63,9 @@ public class Observable {
     private boolean changed = false;
     private Vector<Observer> obs;
 
-    /** Construct an Observable with zero Observers. */
+    /** Construct an Observable with zero Observers.
+     *  Observable 类追踪所有的观察者，并通知他们；
+     * */
 
     public Observable() {
         obs = new Vector<>();
@@ -169,6 +171,7 @@ public class Observable {
     /**
      * Marks this <tt>Observable</tt> object as having been changed; the
      * <tt>hasChanged</tt> method will now return <tt>true</tt>.
+     * 标记状态已经改变的事实；
      */
     protected synchronized void setChanged() {
         changed = true;

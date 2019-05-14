@@ -86,8 +86,7 @@ import java.io.InvalidObjectException;
  * @since   1.2
  */
 
-public class HashSet<E>
-    extends AbstractSet<E>
+public class HashSet<E> extends AbstractSet<E>
     implements Set<E>, Cloneable, java.io.Serializable
 {
     static final long serialVersionUID = -5024744406713321676L;

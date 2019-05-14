@@ -1,0 +1,11 @@
+
+
+
+    PhantomReference主要作为其指向的referent被回收时的一种通知机制,
+它就是利用上文讲到的ReferenceQueue实现的。当referent被gc回收时，
+JVM自动把PhantomReference对象(reference)本身加入到ReferenceQueue中，
+像发出信号通知一样，表明该reference指向的referent被回收。然后可以通过去queue中取到reference，
+此时说明其指向的referent已经被回收，可以通过这个通知机制来做额外的清场工作。
+因此有些情况可以用PhantomReference 代替finalize()，做资源释放更明智。
+
+下面举个例子，用PhantomReference来自动关闭文件流。

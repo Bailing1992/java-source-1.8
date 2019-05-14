@@ -28,11 +28,11 @@ package java.lang;
 import java.lang.annotation.*;
 
 /**
- * An informative annotation type used to indicate that an interface
- * type declaration is intended to be a <i>functional interface</i> as
+ * An informative 提供信息的 annotation type used to indicate 表明 that an interface
+ * type declaration 声明 is intended to be a <i>functional interface</i> as
  * defined by the Java Language Specification.
  *
- * Conceptually, a functional interface has exactly one abstract
+ * Conceptually 概念地 , a functional interface has exactly one abstract
  * method.  Since {@linkplain java.lang.reflect.Method#isDefault()
  * default methods} have an implementation, they are not abstract.  If
  * an interface declares an abstract method overriding one of the

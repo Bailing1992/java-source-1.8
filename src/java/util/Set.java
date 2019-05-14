@@ -297,7 +297,7 @@ public interface Set<E> extends Collection<E> {
     boolean addAll(Collection<? extends E> c);
 
     /**
-     * Retains only the elements in this set that are contained in the
+     * Retains 保持 only the elements in this set that are contained 包含 in the
      * specified collection (optional operation).  In other words, removes
      * from this set all of its elements that are not contained in the
      * specified collection.  If the specified collection is also a set, this

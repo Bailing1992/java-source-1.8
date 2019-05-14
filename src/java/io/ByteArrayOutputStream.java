@@ -47,17 +47,20 @@ public class ByteArrayOutputStream extends OutputStream {
     /**
      * The buffer where data is stored.
      */
+    // 保存“字节数组输出流”数据的数组
     protected byte buf[];
 
     /**
      * The number of valid bytes in the buffer.
      */
+    // “字节数组输出流”的计数
     protected int count;
 
     /**
      * Creates a new byte array output stream. The buffer capacity is
      * initially 32 bytes, though its size increases if necessary.
      */
+    // 构造函数：创建指定数组大小的“字节数组输出流”
     public ByteArrayOutputStream() {
         this(32);
     }
@@ -69,6 +72,7 @@ public class ByteArrayOutputStream extends OutputStream {
      * @param   size   the initial size.
      * @exception  IllegalArgumentException if size is negative.
      */
+    // 构造函数：创建指定数组大小的“字节数组输出流”。
     public ByteArrayOutputStream(int size) {
         if (size < 0) {
             throw new IllegalArgumentException("Negative initial size: "
@@ -87,6 +91,8 @@ public class ByteArrayOutputStream extends OutputStream {
      * interpreted as a request for the unsatisfiably large capacity
      * {@code (long) Integer.MAX_VALUE + (minCapacity - Integer.MAX_VALUE)}.
      */
+    // 确认“容量”。
+    // 若“实际容量 < minCapacity”，则增加“字节数组输出流”的容量
     private void ensureCapacity(int minCapacity) {
         // overflow-conscious code
         if (minCapacity - buf.length > 0)
@@ -107,10 +113,13 @@ public class ByteArrayOutputStream extends OutputStream {
      *
      * @param minCapacity the desired minimum capacity
      */
+    // 增加“容量”。
     private void grow(int minCapacity) {
         // overflow-conscious code
         int oldCapacity = buf.length;
+        // “新容量”的初始化 = “旧容量”x2
         int newCapacity = oldCapacity << 1;
+        // 比较“新容量”和“minCapacity”的大小，并选取其中较大的数为“新的容量”。
         if (newCapacity - minCapacity < 0)
             newCapacity = minCapacity;
         if (newCapacity - MAX_ARRAY_SIZE > 0)
@@ -131,6 +140,7 @@ public class ByteArrayOutputStream extends OutputStream {
      *
      * @param   b   the byte to be written.
      */
+    // 写入一个字节b到“字节数组输出流”中，并将计数+1
     public synchronized void write(int b) {
         ensureCapacity(count + 1);
         buf[count] = (byte) b;
@@ -145,6 +155,8 @@ public class ByteArrayOutputStream extends OutputStream {
      * @param   off   the start offset in the data.
      * @param   len   the number of bytes to write.
      */
+    // 写入字节数组b到“字节数组输出流”中。off是“写入字节数组b的起始位置”，len是写入的长度
+    // write(int oneByte)的作用将int类型的oneByte换成byte类型，然后写入到输出流中。
     public synchronized void write(byte b[], int off, int len) {
         if ((off < 0) || (off > b.length) || (len < 0) ||
             ((off + len) - b.length > 0)) {
@@ -163,6 +175,7 @@ public class ByteArrayOutputStream extends OutputStream {
      * @param      out   the output stream to which to write the data.
      * @exception  IOException  if an I/O error occurs.
      */
+    // 写入输出流outb到“字节数组输出流”中。将该“字节数组输出流”的数据全部写入到“输出流out”中。
     public synchronized void writeTo(OutputStream out) throws IOException {
         out.write(buf, 0, count);
     }
@@ -175,6 +188,7 @@ public class ByteArrayOutputStream extends OutputStream {
      *
      * @see     java.io.ByteArrayInputStream#count
      */
+    // 重置“字节数组输出流”的计数。
     public synchronized void reset() {
         count = 0;
     }
@@ -187,6 +201,7 @@ public class ByteArrayOutputStream extends OutputStream {
      * @return  the current contents of this output stream, as a byte array.
      * @see     java.io.ByteArrayOutputStream#size()
      */
+    // 将“字节数组输出流”转换成字节数组。
     public synchronized byte toByteArray()[] {
         return Arrays.copyOf(buf, count);
     }
@@ -198,6 +213,7 @@ public class ByteArrayOutputStream extends OutputStream {
      *          of valid bytes in this output stream.
      * @see     java.io.ByteArrayOutputStream#count
      */
+    // 返回“字节数组输出流”当前计数值
     public synchronized int size() {
         return count;
     }

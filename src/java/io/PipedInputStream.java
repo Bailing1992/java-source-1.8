@@ -48,17 +48,24 @@ package java.io;
  * @since   JDK1.0
  */
 public class PipedInputStream extends InputStream {
+    // “管道输出流”是否关闭的标记
     boolean closedByWriter = false;
+    // “管道输入流”是否关闭的标记
     volatile boolean closedByReader = false;
+    // “管道输入流”与“管道输出流”是否连接的标记
+    // 它在PipedOutputStream的connect()连接函数中被设置为true
     boolean connected = false;
 
-        /* REMIND: identification of the read and write sides needs to be
-           more sophisticated.  Either using thread groups (but what about
-           pipes within a thread?) or using finalization (but it may be a
-           long time until the next GC). */
+    /* REMIND: identification of the read and write sides needs to be
+       more sophisticated.  Either using thread groups (but what about
+       pipes within a thread?) or using finalization (but it may be a
+       long time until the next GC). */
+    // 读取“管道”数据的线程
     Thread readSide;
+    // 向 “管道” 写入数据的线程
     Thread writeSide;
 
+    // “管道”的默认大小
     private static final int DEFAULT_PIPE_SIZE = 1024;
 
     /**
@@ -67,13 +74,14 @@ public class PipedInputStream extends InputStream {
      */
     // This used to be a constant before the pipe size was allowed
     // to change. This field will continue to be maintained
-    // for backward compatibility.
+    // for backward ompatibility.
     protected static final int PIPE_SIZE = DEFAULT_PIPE_SIZE;
 
     /**
      * The circular buffer into which incoming data is placed.
      * @since   JDK1.1
      */
+    // 缓冲区
     protected byte buffer[];
 
     /**
@@ -83,6 +91,7 @@ public class PipedInputStream extends InputStream {
      * <code>in==out</code> implies the buffer is full
      * @since   JDK1.1
      */
+    //下一个写入字节的位置。in==out代表满，说明“写入的数据”全部被读取了。
     protected int in = -1;
 
     /**
@@ -90,6 +99,7 @@ public class PipedInputStream extends InputStream {
      * byte of data will be read by this piped input stream.
      * @since   JDK1.1
      */
+    //下一个读取字节的位置。in==out代表满，说明“写入的数据”全部被读取了。
     protected int out = 0;
 
     /**
@@ -102,6 +112,7 @@ public class PipedInputStream extends InputStream {
      * @param      src   the stream to connect to.
      * @exception  IOException  if an I/O error occurs.
      */
+    // 构造函数：指定与“管道输入流”关联的“管道输出流”
     public PipedInputStream(PipedOutputStream src) throws IOException {
         this(src, DEFAULT_PIPE_SIZE);
     }
@@ -120,8 +131,8 @@ public class PipedInputStream extends InputStream {
      * @exception  IllegalArgumentException if {@code pipeSize <= 0}.
      * @since      1.6
      */
-    public PipedInputStream(PipedOutputStream src, int pipeSize)
-            throws IOException {
+    // 构造函数：指定与“管道输入流”关联的“管道输出流”，以及“缓冲区大小”
+    public PipedInputStream(PipedOutputStream src, int pipeSize) throws IOException {
          initPipe(pipeSize);
          connect(src);
     }
@@ -150,10 +161,11 @@ public class PipedInputStream extends InputStream {
      * @exception  IllegalArgumentException if {@code pipeSize <= 0}.
      * @since      1.6
      */
+    // 构造函数：默认缓冲区大小是1024字节
     public PipedInputStream(int pipeSize) {
         initPipe(pipeSize);
     }
-
+    // 初始化“管道”：新建缓冲区大小
     private void initPipe(int pipeSize) {
          if (pipeSize <= 0) {
             throw new IllegalArgumentException("Pipe Size <= 0");
@@ -184,6 +196,8 @@ public class PipedInputStream extends InputStream {
      * @param      src   The piped output stream to connect to.
      * @exception  IOException  if an I/O error occurs.
      */
+    // 将“管道输入流”和“管道输出流”绑定。
+    // 实际上，这里调用的是PipedOutputStream的connect()函数
     public void connect(PipedOutputStream src) throws IOException {
         src.connect(this);
     }
@@ -197,15 +211,21 @@ public class PipedInputStream extends InputStream {
      *          closed, or if an I/O error occurs.
      * @since     JDK1.1
      */
+    // 接收int类型的数据b。
+    // 它只会在PipedOutputStream的write(int b)中会被调用
     protected synchronized void receive(int b) throws IOException {
+        // 检查管道状态
         checkStateForReceive();
+        // 获取“写入管道”的线程
         writeSide = Thread.currentThread();
+        // 若“写入管道”的数据正好全部被读取完，则等待。
         if (in == out)
             awaitSpace();
         if (in < 0) {
             in = 0;
             out = 0;
         }
+        // 将b保存到缓冲区
         buffer[in++] = (byte)(b & 0xFF);
         if (in >= buffer.length) {
             in = 0;
@@ -223,13 +243,18 @@ public class PipedInputStream extends InputStream {
      *           closed,or if an I/O error occurs.
      */
     synchronized void receive(byte b[], int off, int len)  throws IOException {
+        // 检查-管道状态
         checkStateForReceive();
+        // 获取“写入管道”的线程
         writeSide = Thread.currentThread();
         int bytesToTransfer = len;
         while (bytesToTransfer > 0) {
+            // 若“写入管道”的数据正好全部被读取完，则等待。
             if (in == out)
                 awaitSpace();
             int nextTransferAmount = 0;
+            // 如果“管道中被读取的数据，少于写入管道的数据”；
+            // 则设置nextTransferAmount=“buffer.length - in”
             if (out < in) {
                 nextTransferAmount = buffer.length - in;
             } else if (in < out) {
@@ -252,7 +277,7 @@ public class PipedInputStream extends InputStream {
             }
         }
     }
-
+    // 检查管道状态
     private void checkStateForReceive() throws IOException {
         if (!connected) {
             throw new IOException("Pipe not connected");

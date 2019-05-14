@@ -39,8 +39,8 @@ import java.util.function.BinaryOperator;
 import sun.misc.Unsafe;
 
 /**
- * An object reference that may be updated atomically. See the {@link
- * java.util.concurrent.atomic} package specification for description
+ * An object reference 引用 that may be updated atomically. See the {@link
+ * java.util.concurrent.atomic} package specification 说明书 for description
  * of the properties of atomic variables.
  * @since 1.5
  * @author Doug Lea

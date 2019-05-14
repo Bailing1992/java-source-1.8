@@ -376,12 +376,13 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * that workerCount is 0 (which sometimes entails a recheck -- see
      * below).
      */
-    // ctl是ThreadPoolExecutor的一个重要属性，它记录着ThreadPoolExecutor的线程数量和线程状态。
-    // ctl是对线程池的运行状态和线程池中有效线程的数量进行控制的一个字段， 它包含两部分的信息:
-    // 线程池的运行状态 (runState) 和线程池内有效线程的数量 (workerCount)
+    // ctl 是 ThreadPoolExecutor 的一个 重要属性，它记录着ThreadPoolExecutor的线程数量和线程状态。
+    // ctl 是对线程池的运行状态和线程池中有效线程的数量进行控制的一个字段，
+    // 它包含两部分的信息:
+    //     线程池的运行状态 (runState) 和线程池内有效线程的数量 (workerCount)
 
     // Integer有32位，其中前三位用于记录线程状态，后29位用于记录线程的数量
-    // 11100000000000... 初始化时，ctl状态为正在运行时，线程数量为0
+    // 11100000000000... 初始化时，ctl状态为正在运行时，线程数量为 0
 
     private final AtomicInteger ctl = new AtomicInteger(ctlOf(RUNNING, 0));
     // COUNT_BITS = 32-3=29;
@@ -421,8 +422,8 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     // workerCountOf：获取活动线程数；
     private static int workerCountOf(int c)  { return c & CAPACITY; }
 
-    //两个数相或
-    // ctlOf：获取运行状态和活动线程数的值。
+    // 两个数相或
+    //      ctlOf：获取运行状态和活动线程数的值。
     private static int ctlOf(int rs, int wc) { return rs | wc; }
 
     /*
@@ -633,12 +634,12 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * state to a negative value, and clear it upon start (in
      * runWorker).
      */
-    // t.start()这个语句，启动时会调用Worker类中的run方法，
-    // Worker本身实现了Runnable接口，所以一个Worker类型的对象也是一个线程
+    // t.start() 这个语句，启动时会调用 Worker 类中的run 方法，
+    // Worker 本身实现了Runnable 接口，所以一个Worker类型的对象也是一个线程
 
     // 线程池中的每一个线程被封装成一个Worker对象，ThreadPool维护的其实就是一组Worker对象;
-    // worker是一个runable，但是还封装了一个runable；
-        //Worker继承了AQS，使用AQS来实现独占锁的功能。用于判断线程是否空闲以及是否可以被中断。
+    // worker是一个runnable，但是还封装了一个runnable；
+    // Worker继承了AQS，使用AQS来实现独占锁的功能。用于判断线程是否空闲以及是否可以被中断。
     private final class Worker extends AbstractQueuedSynchronizer implements Runnable
     {
         /**
@@ -661,8 +662,8 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
          * Creates with given first task and thread from ThreadFactory.
          * @param firstTask the first task (null if none)
          */
-        // Worker类继承了AQS，并实现了Runnable接口，注意其中的firstTask和thread属性：firstTask用它来保存传入的任务；
-        // thread是在调用构造方法时通过ThreadFactory来创建的线程，是用来处理任务的线程。
+        // Worker 类继承了AQS，并实现了 Runnable 接口，注意其中的 firstTask 和thread 属性：firstTask 用它来保存传入的任务；
+        // thread 是在调用构造方法时通过ThreadFactory 来创建的线程，是用来处理任务的线程。
 
         // 在调用构造方法时，需要把任务传入，这里通过getThreadFactory().newThread(this);来新建一个线程，
         // newThread方法传入的参数是this，因为Worker本身继承了Runnable接口，也就是一个线程，
@@ -974,13 +975,13 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * state).
      * @return true if successful
      */
-    // 从execute代码中可以看到，当提交一个任务时，
+    // 从execute 代码中可以看到，当提交一个任务时，
     // 当前线程数小于corePoolSize核心线程数的时候，就新添加一个线程，即addWorker(command, true)
 
-    // addWorker方法的主要工作是在线程池中创建一个新的线程并执行，
+    // addWorker 方法的主要工作是在线程池中创建一个新的线程并执行，
     // firstTask参数用于指定新增的线程执行的第一个任务；null为未设置任务，任务从workQueue取出；
-    // core参数为true表示在新增线程时会判断当前活动线程数是否少于corePoolSize，
-    // false表示新增线程前需要判断当前活动线程数是否少于maximumPoolSize
+    // core 参数为true 表示在新增线程时会判断当前活动线程数是否少于corePoolSize，
+    // false 表示新增线程前需要判断当前活动线程数是否少于 maximumPoolSize
     private boolean addWorker(Runnable firstTask, boolean core) {
         retry:
         for (;;) {
@@ -996,7 +997,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
              * 如果rs >= SHUTDOWN，则表示此时不再接收新任务；
              * 接着判断以下3个条件，只要有1个不满足，则返回false：
              * 1. rs == SHUTDOWN，这时表示关闭状态，不再接受新提交的任务，但却可以继续处理阻塞队列中已保存的任务
-             * 2. firsTask为空
+             * 2. firstTask为空
              * 3. 阻塞队列不为空
              *
              * 首先考虑rs == SHUTDOWN的情况
@@ -1040,12 +1041,12 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
                 // else CAS failed due to workerCount change; retry inner loop
             }
         }
-        // 根据firstTask来创建Worker对象
+        // 根据 firstTask 来创建Worker对象
         boolean workerStarted = false;
         boolean workerAdded = false;
         Worker w = null;
         try {
-            // 根据firstTask来创建Worker对象
+            // 根据 firstTask 来创建Worker 对象
             w = new Worker(firstTask);
             // 每一个Worker对象都会创建一个线程
             final Thread t = w.thread;
@@ -1229,7 +1230,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
 
             // 什么时候会销毁？当然是runWorker方法执行完之后，也就是Worker中的run方法执行完，由JVM自动回收。
 
-            // getTask方法返回null时，在runWorker方法中会跳出while循环，然后会执行processWorkerExit方法。
+            // getTask 方法返回null时，在runWorker方法中会跳出while循环，然后会执行processWorkerExit方法。
 
 
 
@@ -1301,8 +1302,8 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      *
      * @param w the worker
      */
-    // 线程池中的每一个线程被封装成一个Worker对象，ThreadPool维护的其实就是一组Worker对象;
-    // Worker继承了AQS，使用AQS来实现独占锁的功能。
+    // 线程池中 的每一个线程被封装成一个Worker对象，ThreadPool 维护的其实就是一组Worker对象;
+    // Worker 继承了AQS，使用AQS来实现独占锁的功能。
     final void runWorker(Worker w) {
         Thread wt = Thread.currentThread();
         // 获取第一个任务
@@ -1547,7 +1548,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
          * thread.  If it fails, we know we are shut down or saturated
          * and so reject the task.
          */
-        // ctl是ThreadPoolExecutor的一个重要属性，它记录着ThreadPoolExecutor的线程数量和线程状态。
+        // ctl 是 ThreadPoolExecutor 的一个重要属性，它记录着ThreadPoolExecutor 的线程数量和线程状态。
         int c = ctl.get();
         //workerCountOf(c)
         /*

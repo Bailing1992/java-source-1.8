@@ -42,7 +42,7 @@ import java.util.function.BiFunction;
 import java.util.concurrent.Executor;
 
 /**
- * A stage of a possibly asynchronous computation, that performs an
+ * A stage of a possibly asynchronous 异步 computation, that performs an
  * action or computes a value when another CompletionStage completes.
  * A stage completes upon termination of its computation, but this may
  * in turn trigger other dependent stages.  The functionality defined
@@ -123,6 +123,7 @@ import java.util.concurrent.Executor;
  * @author Doug Lea
  * @since 1.8
  */
+//  一个完成的阶段，它里面的方法也标明是在某个运行阶段得到了结果之后要做的事情。
 public interface CompletionStage<T> {
 
     /**

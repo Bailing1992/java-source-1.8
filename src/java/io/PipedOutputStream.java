@@ -50,6 +50,7 @@ class PipedOutputStream extends OutputStream {
            more sophisticated.  Either using thread groups (but what about
            pipes within a thread?) or using finalization (but it may be a
            long time until the next GC). */
+        // 与PipedOutputStream通信的PipedInputStream对象
     private PipedInputStream sink;
 
     /**
@@ -60,6 +61,7 @@ class PipedOutputStream extends OutputStream {
      * @param      snk   The piped input stream to connect to.
      * @exception  IOException  if an I/O error occurs.
      */
+    // 构造函数，指定配对的PipedInputStream
     public PipedOutputStream(PipedInputStream snk)  throws IOException {
         connect(snk);
     }
@@ -93,15 +95,23 @@ class PipedOutputStream extends OutputStream {
      * @param      snk   the piped input stream to connect to.
      * @exception  IOException  if an I/O error occurs.
      */
+    // 将“管道输出流” 和 “管道输入流”连接。
     public synchronized void connect(PipedInputStream snk) throws IOException {
         if (snk == null) {
             throw new NullPointerException();
         } else if (sink != null || snk.connected) {
             throw new IOException("Already connected");
         }
+        // 设置“管道输入流”
         sink = snk;
+        // 初始化“管道输入流”的读写位置
+        // int是PipedInputStream中定义的，代表“管道输入流”的读写位置
         snk.in = -1;
+        // 初始化“管道输出流”的读写位置。
+        // out是PipedInputStream中定义的，代表“管道输出流”的读写位置
         snk.out = 0;
+        // 设置“管道输入流”和“管道输出流”为已连接状态
+        // connected是PipedInputStream中定义的，用于表示“管道输入流与管道输出流”是否已经连接
         snk.connected = true;
     }
 
@@ -115,6 +125,8 @@ class PipedOutputStream extends OutputStream {
      *          {@link #connect(java.io.PipedInputStream) unconnected},
      *          closed, or if an I/O error occurs.
      */
+    // 将int类型b写入“管道输出流”中。
+    // 将b写入“管道输出流”之后，它会将b传输给“管道输入流”
     public void write(int b)  throws IOException {
         if (sink == null) {
             throw new IOException("Pipe not connected");
@@ -135,6 +147,8 @@ class PipedOutputStream extends OutputStream {
      *          {@link #connect(java.io.PipedInputStream) unconnected},
      *          closed, or if an I/O error occurs.
      */
+    // 将字节数组b写入“管道输出流”中。
+    // 将数组b写入“管道输出流”之后，直接会将其传输给“管道输入流”
     public void write(byte b[], int off, int len) throws IOException {
         if (sink == null) {
             throw new IOException("Pipe not connected");
@@ -146,6 +160,7 @@ class PipedOutputStream extends OutputStream {
         } else if (len == 0) {
             return;
         }
+        // “管道输入流”接收数据
         sink.receive(b, off, len);
     }
 
@@ -156,6 +171,9 @@ class PipedOutputStream extends OutputStream {
      *
      * @exception IOException if an I/O error occurs.
      */
+    // 清空 “管道输出流”。
+    // 这里会调用“管道输入流”的 notifyAll()；
+    // 目的是让“管道输入流”放弃对当前资源的占有，让其它的等待线程(等待读取管道输出流的线程)读取“管道输出流”的值。
     public synchronized void flush() throws IOException {
         if (sink != null) {
             synchronized (sink) {
@@ -171,9 +189,12 @@ class PipedOutputStream extends OutputStream {
      *
      * @exception  IOException  if an I/O error occurs.
      */
+    // 关闭  “管道输出流”。
+    // 关闭之后，会调用receivedLast()通知“管道输入流”它已经关闭。
     public void close()  throws IOException {
         if (sink != null) {
             sink.receivedLast();
         }
     }
+
 }

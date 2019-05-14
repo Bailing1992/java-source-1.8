@@ -4,9 +4,9 @@
  *
  *
  *
+ *  线程本地变量
  *
- *
- *
+ * ThreadLocal为变量在每个线程中都创建了一个副本，那么每个线程可以访问自己内部的副本变量。
  *
  *
  *
@@ -31,8 +31,8 @@ import java.util.function.Supplier;
 
 /**
  * This class provides thread-local variables.  These variables differ from
- * their normal counterparts in that each thread that accesses one (via its
- * {@code get} or {@code set} method) has its own, independently initialized
+ * their normal counterparts 副本 in that each thread that accesses one (via its
+ * {@code get} or {@code set} method) has its own, independently  独立地；自立地 initialized
  * copy of the variable.  {@code ThreadLocal} instances are typically private
  * static fields in classes that wish to associate state with a thread (e.g.,
  * a user ID or Transaction ID).
@@ -71,6 +71,7 @@ import java.util.function.Supplier;
  * @author  Josh Bloch and Doug Lea
  * @since   1.2
  */
+//ThreadLocal的数据访问算法，本质上就是Map的访问特性。
 public class ThreadLocal<T> {
     /**
      * ThreadLocals rely on per-thread linear-probe hash maps attached
@@ -123,6 +124,7 @@ public class ThreadLocal<T> {
      *
      * @return the initial value for this thread-local
      */
+    // value初始化
     protected T initialValue() {
         return null;
     }
@@ -156,10 +158,12 @@ public class ThreadLocal<T> {
      *
      * @return the current thread's value of this thread-local
      */
+    // get()方法是用来获取ThreadLocal在当前线程中保存的变量副本
     public T get() {
         Thread t = Thread.currentThread();
         ThreadLocalMap map = getMap(t);
         if (map != null) {
+            //  注意这里获取键值对传进去的是this，而不是当前线程t。因为一个线程可能会包含多个threadLocal；
             ThreadLocalMap.Entry e = map.getEntry(this);
             if (e != null) {
                 @SuppressWarnings("unchecked")
@@ -176,6 +180,7 @@ public class ThreadLocal<T> {
      *
      * @return the initial value
      */
+    // 当get的value没有事先set时，进行初始化；
     private T setInitialValue() {
         T value = initialValue();
         Thread t = Thread.currentThread();
@@ -196,6 +201,7 @@ public class ThreadLocal<T> {
      * @param value the value to be stored in the current thread's copy of
      *        this thread-local.
      */
+    // set()用来设置当前线程中变量的副本
     public void set(T value) {
         Thread t = Thread.currentThread();
         ThreadLocalMap map = getMap(t);
@@ -216,6 +222,7 @@ public class ThreadLocal<T> {
      *
      * @since 1.5
      */
+    // remove()用来移除当前线程中变量的副本
      public void remove() {
          ThreadLocalMap m = getMap(Thread.currentThread());
          if (m != null)
@@ -229,6 +236,7 @@ public class ThreadLocal<T> {
      * @param  t the current thread
      * @return the map
      */
+    //在getMap中，是调用当期线程t，返回当前线程t中的一个成员变量threadLocals。
     ThreadLocalMap getMap(Thread t) {
         return t.threadLocals;
     }
@@ -240,6 +248,7 @@ public class ThreadLocal<T> {
      * @param t the current thread
      * @param firstValue value for the initial entry of the map
      */
+    // 构建 与 ThreadLocal 相关联的 map
     void createMap(Thread t, T firstValue) {
         t.threadLocals = new ThreadLocalMap(this, firstValue);
     }
@@ -279,6 +288,7 @@ public class ThreadLocal<T> {
             this.supplier = Objects.requireNonNull(supplier);
         }
 
+        // initialValue()是一个protected方法，一般是用来在使用时进行重写的，它是一个延迟加载方法
         @Override
         protected T initialValue() {
             return supplier.get();
@@ -295,6 +305,7 @@ public class ThreadLocal<T> {
      * used, stale entries are guaranteed to be removed only when
      * the table starts running out of space.
      */
+    //ThreadLocalMap就是一个Map结构（K-V）键值对
     static class ThreadLocalMap {
 
         /**
@@ -305,6 +316,7 @@ public class ThreadLocal<T> {
          * entry can be expunged from table.  Such entries are referred to
          * as "stale entries" in the code that follows.
          */
+        // ThreadLocalMap的Entry继承了WeakReference，并且使用ThreadLocal作为键值
         static class Entry extends WeakReference<ThreadLocal<?>> {
             /** The value associated with this ThreadLocal. */
             Object value;
@@ -362,7 +374,9 @@ public class ThreadLocal<T> {
          * ThreadLocalMaps are constructed lazily, so we only create
          * one when we have at least one entry to put in it.
          */
+        //firstKey 为ThreadLocal
         ThreadLocalMap(ThreadLocal<?> firstKey, Object firstValue) {
+            //
             table = new Entry[INITIAL_CAPACITY];
             int i = firstKey.threadLocalHashCode & (INITIAL_CAPACITY - 1);
             table[i] = new Entry(firstKey, firstValue);

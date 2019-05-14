@@ -309,11 +309,13 @@ public interface Spliterator<T> {
     boolean tryAdvance(Consumer<? super T> action);
 
     /**
-     * Performs the given action for each remaining element, sequentially in
+     * Performs 执行 the given action for each remaining element, sequentially 顺序的 in
      * the current thread, until all elements have been processed or the action
-     * throws an exception.  If this Spliterator is {@link #ORDERED}, actions
-     * are performed in encounter order.  Exceptions thrown by the action
+     * throws an exception.  If this Spliterator is {@link #ORDERED} 有序的, actions
+     * are performed in encounter order 出现顺序.  Exceptions thrown by the action
      * are relayed to the caller.
+     * 对每个剩余元素执行给定的动作，依次处理，
+     * 直到所有元素已被处理或被异常终止。默认方法调用tryAdvance方法
      *
      * @implSpec
      * The default implementation repeatedly invokes {@link #tryAdvance} until
@@ -363,6 +365,7 @@ public interface Spliterator<T> {
      * deviations in balance and/or overly inefficient {@code
      * trySplit} mechanics typically result in poor parallel
      * performance.
+     *  对任务分割，返回一个新的Spliterator迭代器
      *
      * @return a {@code Spliterator} covering some portion of the
      * elements, or {@code null} if this spliterator cannot be split
@@ -389,6 +392,7 @@ public interface Spliterator<T> {
      * accurate count, it could estimate size to be the power of two
      * corresponding to its maximum depth.
      *
+     * 用于估算还剩下多少个元素需要遍历
      * @return the estimated size, or {@code Long.MAX_VALUE} if infinite,
      *         unknown, or too expensive to compute.
      */
@@ -401,6 +405,7 @@ public interface Spliterator<T> {
      * The default implementation returns the result of {@code estimateSize()}
      * if the Spliterator reports a characteristic of {@code SIZED}, and
      * {@code -1} otherwise.
+     *  当迭代器拥有SIZED特征时，返回剩余元素个数；否则返回-1
      *
      * @return the exact size, if known, else {@code -1}.
      */
@@ -426,7 +431,7 @@ public interface Spliterator<T> {
      * may differ from the characteristics after splitting.  For specific
      * examples see the characteristic values {@link #SIZED}, {@link #SUBSIZED}
      * and {@link #CONCURRENT}.
-     *
+     *返回当前对象有哪些特征值
      * @return a representation of characteristics
      */
     int characteristics();
@@ -438,7 +443,7 @@ public interface Spliterator<T> {
      * @implSpec
      * The default implementation returns true if the corresponding bits
      * of the given characteristics are set.
-     *
+     *是否具有当前特征值
      * @param characteristics the characteristics to check for
      * @return {@code true} if all the specified characteristics are present,
      * else {@code false}
@@ -461,6 +466,9 @@ public interface Spliterator<T> {
      * @throws IllegalStateException if the spliterator does not report
      *         a characteristic of {@code SORTED}.
      */
+    //如果Spliterator的list是通过Comparator排序的，则返回Comparator
+    //如果Spliterator的list是自然排序的 ，则返回null
+    //其他情况下抛错
     default Comparator<? super T> getComparator() {
         throw new IllegalStateException();
     }

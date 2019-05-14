@@ -37,9 +37,10 @@ package java.util.concurrent.atomic;
 import sun.misc.Unsafe;
 
 /**
- * A {@code boolean} value that may be updated atomically. See the
- * {@link java.util.concurrent.atomic} package specification for
- * description of the properties of atomic variables. An
+ * 多线程安全-boolean
+ * A {@code boolean} value that may be updated atomically 原子方式更新. See the
+ * {@link java.util.concurrent.atomic} package specification 详述 for
+ * description of the properties 性能；道具，内容 of atomic variables. An
  * {@code AtomicBoolean} is used in applications such as atomically
  * updated flags, and cannot be used as a replacement for a
  * {@link java.lang.Boolean}.
@@ -95,6 +96,10 @@ public class AtomicBoolean implements java.io.Serializable {
      * @return {@code true} if successful. False return indicates that
      * the actual value was not equal to the expected value.
      */
+    // compareAndSet：如果当前值 == 预期值，
+    // 则以原子方式将该值设置为给定的更新值。
+    // 这里需要注意的是这个方法的返回值实际上是是否成功修改，
+    // 而与之前的值无关。
     public final boolean compareAndSet(boolean expect, boolean update) {
         int e = expect ? 1 : 0;
         int u = update ? 1 : 0;

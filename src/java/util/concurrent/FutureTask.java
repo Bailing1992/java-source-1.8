@@ -136,7 +136,7 @@ public class FutureTask<V> implements RunnableFuture<V> {
      * @param  callable the callable task
      * @throws NullPointerException if the callable is null
      */
-    // V为返回类型
+    // V 为返回类型
     public FutureTask(Callable<V> callable) {
         if (callable == null)
             throw new NullPointerException();
@@ -293,7 +293,7 @@ public class FutureTask<V> implements RunnableFuture<V> {
                 V result;
                 boolean ran;
                 try {
-                    // 3. 执行任务
+                    // 3. 执行-任务
                     result = c.call();
                     ran = true;
                 } catch (Throwable ex) {
@@ -444,10 +444,10 @@ public class FutureTask<V> implements RunnableFuture<V> {
      * @param nanos time to wait, if timed
      * @return state upon completion
      */
-    //核心思想：
-    // 假设当前state=NEW且waiters为NULL,也就是说还没有任何一个线程调用get()获取执行结果，
-    // 这个时候有两个线程threadA和threadB先后调用get()来获取执行结果。
-    // 再假设这两个线程在加入阻塞队列进行阻塞等待之前，任务都没有执行完成且threadA和threadB都没有被中断的情况下
+    // 核心思想：
+    //    假设当前state=NEW且waiters为NULL, 也就是说还没有任何一个线程调用get()获取执行结果，
+    //    这个时候有两个线程threadA和threadB先后调用get()来获取执行结果。
+    //    再假设这两个线程在加入阻塞队列进行阻塞等待之前，任务都没有执行完成且threadA和threadB都没有被中断的情况下
     // (因为如果threadA和threadB在进行阻塞得到结果之前，任务就执行完成或线程本身被中断的话，awaitDone()就执行结束返回了)，
     // 执行过程是这样的，以threadA为例:
 
@@ -472,7 +472,6 @@ public class FutureTask<V> implements RunnableFuture<V> {
             // 说明任务已经结束(要么正常结束，要么异常结束，要么被取消)
             // 则把thread显示置空，并返回结果
             // 表明调用get()的线程不在等待了；
-
             // 最后一轮循环，返回结果；
             int s = state;
             if (s > COMPLETING) {

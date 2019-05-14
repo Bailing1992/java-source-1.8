@@ -5,26 +5,10 @@
  *
  *
  *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  */
 
-// -- This file was mechanically generated: Do not edit! -- //
-
+// -- This file was mechanically  机械地；呆板地；物理上地  generated: Do not edit! -- //
+//  Netty-所用的堆外内存只是Java NIO的 DirectByteBuffer 类，通读一次很快。还有一些sun.misc.*的类木有源码
 package java.nio;
 
 import java.io.FileDescriptor;
@@ -34,16 +18,8 @@ import sun.misc.VM;
 import sun.nio.ch.DirectBuffer;
 
 
-class DirectByteBuffer
-
-    extends MappedByteBuffer
-
-
-
-    implements DirectBuffer
+class DirectByteBuffer extends MappedByteBuffer implements DirectBuffer
 {
-
-
 
     // Cached unsafe-access object
     protected static final Unsafe unsafe = Bits.unsafe();
@@ -69,8 +45,7 @@ class DirectByteBuffer
 
 
 
-    private static class Deallocator
-        implements Runnable
+    private static class Deallocator implements Runnable
     {
 
         private static Unsafe unsafe = Unsafe.getUnsafe();
@@ -138,8 +113,6 @@ class DirectByteBuffer
         }
         cleaner = Cleaner.create(this, new Deallocator(base, size, cap));
         att = null;
-
-
 
     }
 

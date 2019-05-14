@@ -39,9 +39,10 @@ package java.io;
  * @author  Arthur van Hoff
  * @see     java.io.StringBufferInputStream
  * @since   JDK1.0
+ *  通过ByteArrayInputStream(byte buf[]) 或
+ *  ByteArrayInputStream(byte buf[], int offset, int length) ，我们可以根据buf数组来创建字节流对象。
  */
-public
-class ByteArrayInputStream extends InputStream {
+public class ByteArrayInputStream extends InputStream {
 
     /**
      * An array of bytes that was provided
@@ -140,6 +141,7 @@ class ByteArrayInputStream extends InputStream {
      * @return  the next byte of data, or <code>-1</code> if the end of the
      *          stream has been reached.
      */
+    // read()的作用是从字节流中“读取下一个字节”。
     public synchronized int read() {
         return (pos < count) ? (buf[pos++] & 0xff) : -1;
     }
@@ -173,6 +175,8 @@ class ByteArrayInputStream extends InputStream {
      * <code>len</code> is negative, or <code>len</code> is greater than
      * <code>b.length - off</code>
      */
+    // read(byte[] buffer, int offset, int length)的作用是从字节流读取字节数据，
+    // 并写入到字节数组buffer中。offset是将字节写入到buffer的起始位置，length是写入的字节的长度。
     public synchronized int read(byte b[], int off, int len) {
         if (b == null) {
             throw new NullPointerException();
@@ -239,6 +243,7 @@ class ByteArrayInputStream extends InputStream {
      *
      * @since   JDK1.1
      */
+    // markSupported()是判断字节流是否支持“标记功能”。它一直返回true。
     public boolean markSupported() {
         return true;
     }
@@ -258,6 +263,8 @@ class ByteArrayInputStream extends InputStream {
      *
      * @since   JDK1.1
      */
+    //mark(int readlimit)的作用是记录标记位置。记录标记位置之后，某一时刻调用reset()则将“字节流下一个被读取的位置”重置到“mark(int readlimit)所标记的位置”；
+    // 也就是说，reset()之后再读取字节流时，是从mark(int readlimit)所标记的位置开始读取。
     public void mark(int readAheadLimit) {
         mark = pos;
     }

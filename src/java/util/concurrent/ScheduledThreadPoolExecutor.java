@@ -4,28 +4,11 @@
  *
  *
  *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- */
-
-/*
- *
- *
- *
+ *可以看出由于ScheduledThreadPoolExecutor继承了ThreadPoolExecutor，它的构造方法实际上是调用了ThreadPoolExecutor，
+ * 对ThreadPoolExecutor的介绍可以可以看这篇文章，理解ThreadPoolExecutor构造方法的几个参数的意义后，理解这就很容易了。
+ * 可以看出，ScheduledThreadPoolExecutor的核心线程池的线程个数为指定的corePoolSize，当核心线程池的线程个数达到corePoolSize后，
+ * 就会将任务提交给有界阻塞队列DelayedWorkQueue，对DelayedWorkQueue在下面进行详细介绍，
+ * 线程池允许最大的线程个数为Integer.MAX_VALUE，也就是说理论上这是一个大小无界的线程池。
  *
  *
  * Written by Doug Lea with assistance from members of JCP JSR-166

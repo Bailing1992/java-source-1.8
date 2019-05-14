@@ -30,8 +30,8 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A watch service that <em>watches</em> registered objects for changes and
- * events. For example a file manager may use a watch service to monitor a
+ * A watch service  that <em>watches</em> registered objects for changes and
+ * events. For example a file manager may use a watch service to monitor 监视 a
  * directory for changes so that it can update its display of the list of files
  * when files are created or deleted.
  *

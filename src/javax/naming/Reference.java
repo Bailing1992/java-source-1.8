@@ -80,6 +80,7 @@ import java.util.Enumeration;
 */
 
 
+
 public class Reference implements Cloneable, java.io.Serializable {
     /**
      * Contains the fully-qualified name of the class of the object to which
