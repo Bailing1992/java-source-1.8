@@ -150,7 +150,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
             if (Thread.currentThread() != getExclusiveOwnerThread())
                 throw new IllegalMonitorStateException();
             boolean free = false;
-            if (c == 0) {
+            if (c == 0) {// 因为是重入的关系，不是每次释放锁 c 都等于 0
                 free = true;
                 setExclusiveOwnerThread(null);
             }
@@ -229,19 +229,22 @@ public class ReentrantLock implements Lock, java.io.Serializable {
          * recursive call or no waiters or is first.
          */
         protected final boolean tryAcquire(int acquires) {
-            final Thread current = Thread.currentThread();
-            int c = getState();
+            final Thread current = Thread.currentThread(); // 获取当前线程
+            int c = getState();// 获取父类 AQS 中的标志位
+
             if (c == 0) {
-                if (!hasQueuedPredecessors() &&
-                    compareAndSetState(0, acquires)) {
-                    setExclusiveOwnerThread(current);
+                if (!hasQueuedPredecessors() &&  // 如果队列中没有其他线程  说明没有线程正在占有锁！
+                        compareAndSetState(0, acquires)) {  // 修改一下状态位
+                    setExclusiveOwnerThread(current); // 如果通过 CAS 操作将状态为更新成功则代表当前线程获取锁，则设置线程
                     return true;
                 }
             }
+            // // 如果不为 0 意味着，锁已经被拿走了，但是，因为 ReentrantLock 是重入锁
+            // 是可以重复 lock,unlock 的，只要成对出现就行
             else if (current == getExclusiveOwnerThread()) {
                 int nextc = c + acquires;
                 if (nextc < 0)
-                    throw new Error("Maximum lock count exceeded");
+                    throw new Error("Maximum lock count exceeded"); // 溢出
                 setState(nextc);
                 return true;
             }

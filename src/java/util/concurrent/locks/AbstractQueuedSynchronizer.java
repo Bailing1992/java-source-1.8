@@ -446,6 +446,12 @@ public abstract class AbstractQueuedSynchronizer
          * (or when possible, unconditional volatile writes).
          */
         // 结点状态
+        // 该变量用于描述节点的状态
+        // AQS 的队列中，在有并发时，肯定会存取一定数量的节点，
+        // 每个节点[G4] 代表了一个线程的状态，有的线程可能“等不及”获取锁了，
+        // 需要放弃竞争，退出队列，有的线程在等待一些条件满足，满足后才恢复执行
+        // （这里的描述很像某个 J.U.C 包下的工具类，ReentrankLock 的 Condition，事实上，Condition 同样也是 AQS 的子类）等等，
+        // 总之，各个线程有各个线程的状态，但总需要一个变量来描述它，这个变量就叫 waitStatus, 它有四种状态：
         volatile int waitStatus;
 
         /**
@@ -869,7 +875,7 @@ public abstract class AbstractQueuedSynchronizer
              * This node has already set status asking a release
              * to signal it, so it can safely park.
              */
-            // 可以进行park操作
+            // 可以进行 park 操作
             return true;
         // 表示状态为CANCELLED，为1
         if (ws > 0) {// 表示状态为CANCELLED，为1
@@ -882,7 +888,8 @@ public abstract class AbstractQueuedSynchronizer
 
             } while (pred.waitStatus > 0); // 找到pred结点前面最近的一个状态不为CANCELLED的结点
             pred.next = node;// 赋值pred结点的next域
-        } else {// 为PROPAGATE -3 或者是0 表示无状态,(为CONDITION -2时，表示此节点在condition queue中)
+        } else {
+            // 为PROPAGATE -3 或者是0 表示无状态,(为CONDITION -2时，表示此节点在condition queue中)
             /*
              * waitStatus must be 0 or PROPAGATE.  Indicate that we
              * need a signal, but don't park yet.  Caller will need to
@@ -945,16 +952,19 @@ public abstract class AbstractQueuedSynchronizer
             for (;;) {
                 // 获取node节点的前驱结点
                 final Node p = node.predecessor();
+                // 如果当前的节点是 head 说明他是队列中第一个“有效的”节点，因此尝试获取锁
                 if (p == head && tryAcquire(arg)) {
                     // 前驱为头结点并且成功获得锁
-                    setHead(node);
+                    setHead(node);// 成功后，将上图中的黄色节点移除
                     // 设置头结点
                     p.next = null; // help GC
                     failed = false;// 设置标志
 
                     return interrupted;
                 }
+                // 否则，检查前一个节点的状态为，看当前获取锁失败的线程是否需要挂起。
                 if (shouldParkAfterFailedAcquire(p, node) &&
+                        // 如果需要，借助 JUC 包下的 LockSopport 类的静态方法 Park 挂起
                     parkAndCheckInterrupt())
                     interrupted = true;
             }

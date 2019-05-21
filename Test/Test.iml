@@ -8,5 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="java-source-1.8" />
+    <orderEntry type="module" module-name="java-source-1.8" />
   </component>
 </module>
