@@ -1197,7 +1197,7 @@ public interface Map<K,V> {
      *         null
      * @since 1.8
      */
-    // 复合运算；
+    // 复合-运算；
     default V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
         Objects.requireNonNull(remappingFunction);
         Objects.requireNonNull(value);
