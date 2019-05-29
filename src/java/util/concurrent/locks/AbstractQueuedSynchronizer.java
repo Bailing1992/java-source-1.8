@@ -447,10 +447,10 @@ public abstract class AbstractQueuedSynchronizer
          */
         // 结点状态
         // 该变量用于描述节点的状态
-        // AQS 的队列中，在有并发时，肯定会存取一定数量的节点，
+        // aqs 的队列中，在有并发时，肯定会存取一定数量的节点，
         // 每个节点[G4] 代表了一个线程的状态，有的线程可能“等不及”获取锁了，
         // 需要放弃竞争，退出队列，有的线程在等待一些条件满足，满足后才恢复执行
-        // （这里的描述很像某个 J.U.C 包下的工具类，ReentrankLock 的 Condition，事实上，Condition 同样也是 AQS 的子类）等等，
+        // （这里的描述很像某个 J.U.C 包下的工具类，ReentrankLock 的 Condition，事实上，Condition 同样也是 aqs 的子类）等等，
         // 总之，各个线程有各个线程的状态，但总需要一个变量来描述它，这个变量就叫 waitStatus, 它有四种状态：
         volatile int waitStatus;
 

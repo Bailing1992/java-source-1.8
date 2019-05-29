@@ -1034,11 +1034,11 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             Node<K,V> f; int n, i, fh;
             // 如果数组"空"，进行数组初始化
             if (tab == null || (n = tab.length) == 0)
-                // 初始化数组，后面会详细介绍
+                // 初始化数组
                 tab = initTable();
             // 找该 hash 值对应的数组下标，得到第一个节点 f
             else if ((f = tabAt(tab, i = (n - 1) & hash)) == null) {
-                // 如果-数组该位置为空，
+                // 如果数组该位置为空，
                 //    用一次 CAS 操作将这个新值放入其中即可，这个 put 操作差不多就结束了，可以拉到最后面了
                 //          如果 CAS 失败，那就是有并发操作，进到下一个循环就好了
                 if (casTabAt(tab, i, null,
@@ -1051,7 +1051,6 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 tab = helpTransfer(tab, f);
             else {
                 // 到这里就是说，f 是该位置的头结点，而且不为空
-
                 V oldVal = null;
                 // 获取数组该位置的头结点的监视器锁
                 synchronized (f) {
@@ -1081,7 +1080,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                                 }
                             }
                         }
-                        //// 红黑树
+                        // 红黑树
                         else if (f instanceof TreeBin) {
                             Node<K,V> p;
                             binCount = 2;
@@ -1101,14 +1100,15 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                     if (binCount >= TREEIFY_THRESHOLD)
                         // 这个方法和 HashMap 中稍微有一点点不同，那就是它不是一定会进行红黑树转换，
                         // 如果当前数组的长度小于 64，那么会选择进行数组扩容，而不是转换为红黑树
-                        //    具体源码我们就不看了，扩容部分后面说
                         treeifyBin(tab, i);
                     if (oldVal != null)
+                        // 值替换，不需要进行addCount，直接返回
                         return oldVal;
                     break;
                 }
             }
         }
+        // 对哈希表的元素进行计数
         addCount(1L, binCount);
         return null;
     }
@@ -2255,7 +2255,23 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * Returns the stamp bits for resizing a table of size n.
      * Must be negative when shifted left by RESIZE_STAMP_SHIFT.
      */
+
+    // resizeStamp(n) 返回的是对 n 的一个数据校验标识，占 16 位。
+    // 而 RESIZE_STAMP_SHIFT 的值为 16，那么位运算后，整个表达式必然在右边空出 16 个零。
+    // 也正如我们所说的，sizeCtl 的高 16 位为数据校验标识，低 16 为表示正在进行扩容的线程数量。
+    //
+
+
+
+
+    // 参数为n = 2^m 表示table长度；
+    // Integer.numberOfLeadingZeros(n) 返回的是 n 的32位二进制形式前面的0的个数,
+    // 例如值16的int(32位)类型二进制表示为000000...0010000,1前面的就有27个0,返回就是27.|操作现在此处可以简单理解为加法。
+    // |操作现在此处可以简单理解为加法。
+    // 整合起来作用就是: 获取n的有效位之前的0的个数加上1的15次方.
     static final int resizeStamp(int n) {
+        // n = 16;
+        // 0000 0000 0000 0000 - 1000 0000 0001 0000
         return Integer.numberOfLeadingZeros(n) | (1 << (RESIZE_STAMP_BITS - 1));
     }
 
@@ -2308,16 +2324,53 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @param x the count to add
      * @param check if <0, don't check resize, if <= 1 only check if uncontended
      */
+    // 参数 x 表示的此次需要对表中元素的个数加几，从 putVal 传入的参数是 1，
+
+
+    // 参数 check 参数表示是否需要进行扩容检查，大于等于0 需要进行检查，
+    // 而我们的 putVal 方法的 binCount 参数最小也是 0 ，因此，每次添加元素都会进行检查。（除非是覆盖操作）
+    // binCount 是链表长度，binCount 默认是0，只有 hash 冲突了才会大于 1.
+    // 且 binCount 的大小是链表的长度（如果不是红黑数结构的话）。
+
+    // 总结：addCount 方法做了 2 件事情：
+    // 1、 对 table 的长度加一。无论是通过修改 baseCount，还是通过使用 CounterCell。当 CounterCell 被初始化了，就优先使用他，不再使用 baseCount。
+    // 2、检查是否需要扩容，或者是否正在扩容。如果需要扩容，就调用扩容方法，如果正在扩容，就帮助其扩容。
+
+    // ConcurrentHashMap里统计size的运作方式是 添加一个元素 先用cas给baseCount加一
+    // 如果竞争激烈cas操作失败 就进入fullAddCount方法给CounterCell数组添加一个CounterCell里面是1
+    // 统计的时候baseCount和CounterCell数组所有数值相加;
+
     private final void addCount(long x, int check) {
         CounterCell[] as; long b, s;
+
+        // 更新baseCount ( table的数量)，counterCells表示元素个数的变化
+
+        // 判断计数盒子属性是否是空，如果是空，就尝试修改 baseCount 变量，对该变量进行加 X。
+        // 如果计数盒子不是空，或者修改 baseCount 变量失败了，则放弃对 baseCount 进行操作。
+        // 如果计数盒子不是空 或者 修改 baseCount 失败
         if ((as = counterCells) != null ||
             !U.compareAndSwapLong(this, BASECOUNT, b = baseCount, s = b + x)) {
+
+
             CounterCell a; long v; int m;
             boolean uncontended = true;
+
+
+
+
+            // 如果多个线程都在执行，则CAS失败，执行fullAddCount，全部加入count
+
+            // 如果计数盒子是空（尚未出现并发）
+            // 如果随机取余一个数组位置为空 或者
+            // 修改这个槽位的变量失败（出现并发了）
+            // 执行 fullAddCount 方法。并结束
+
+            // 如果计数盒子是 null 或者计数盒子的 length 是 0，或者随机取一个位置取于数组长度是 null，那么就对刚刚的元素进行 CAS 赋值。
             if (as == null || (m = as.length - 1) < 0 ||
                 (a = as[ThreadLocalRandom.getProbe() & m]) == null ||
                 !(uncontended =
                   U.compareAndSwapLong(a, CELLVALUE, v = a.value, v + x))) {
+                // 如果赋值失败，或者满足上面的条件，则调用 fullAddCount 方法重新死循环插入
                 fullAddCount(x, uncontended);
                 return;
             }
@@ -2325,21 +2378,48 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 return;
             s = sumCount();
         }
+
+        // 这里如果操作 baseCount 失败了（或者计数盒子不是 Null），
+        // 且对计数盒子赋值成功，那么就检查 check 变量，如果该变量小于等于 1. 直接结束.
+        // 否则，计算一下 count 变量。
+        // 如果 check 大于等于 0 ，说明需要对是否扩容进行检查。如果需要检查,检查是否需要扩容，在 putVal 方法调用时，默认就是要检查的
         if (check >= 0) {
             Node<K,V>[] tab, nt; int n, sc;
+            // 如果 map.size() 大于 sizeCtl（达到扩容阈值需要扩容） 且
+            // table 不是空；且 table 的长度小于 1 << 30。（可以扩容）
             while (s >= (long)(sc = sizeCtl) && (tab = table) != null &&
                    (n = tab.length) < MAXIMUM_CAPACITY) {
+                // 根据 length 得到一个标识
                 int rs = resizeStamp(n);
+                // 如果正在扩容
                 if (sc < 0) {
+                    // 如果 sc 的低 16 位不等于 标识符（校验异常 sizeCtl 变化了）
+                    // 如果 sc == 标识符 + 1 （扩容结束了，不再有线程进行扩容）（默认第一个线程设置 sc ==rs 左移 16 位 + 2，当第一个线程结束扩容了，就会将 sc 减一。这个时候，sc 就等于 rs + 1）
+                    // 如果 sc == 标识符 + 65535（帮助线程数已经达到最大）
+                    // 如果 nextTable == null（结束扩容了）
+                    // 如果 transferIndex <= 0 (转移状态变化了)
+                    // 结束循环
                     if ((sc >>> RESIZE_STAMP_SHIFT) != rs || sc == rs + 1 ||
                         sc == rs + MAX_RESIZERS || (nt = nextTable) == null ||
                         transferIndex <= 0)
                         break;
+                    // 如果可以帮助扩容，那么将 sc 加 1. 表示多了一个线程在帮助扩容
                     if (U.compareAndSwapInt(this, SIZECTL, sc, sc + 1))
+                        // 扩容
                         transfer(tab, nt);
                 }
+                // 如果不在扩容，将 sc 更新：标识符左移 16 位 然后 + 2. 也就是变成一个负数。高 16 位是标识符，低 16 位初始是 2.
+                // 表示，已经有一个线程开始扩容了。然后进行扩容。然后再次更新 count，看看是否还需要扩容。
+                 // n = 16;
+                // 0000 0000 0000 0000 - 1000 0000 0001 0000
+                // 1000 0000 0001 0000 - 0000 0000 0000 0010
+                //
+                // (resizeStamp(n) << RESIZE_STAMP_SHIFT) + 2 表示当前只有一个线程正在工作，相对应的，
+                // 在transfer中，如果 (sc - 2) == resizeStamp(n) << RESIZE_STAMP_SHIFT，
+                // 说明当前线程就是最后一个还在扩容的线程，那么会将 finishing 标识为 true，并在下一次循环中退出扩容方法。
                 else if (U.compareAndSwapInt(this, SIZECTL, sc,
                                              (rs << RESIZE_STAMP_SHIFT) + 2))
+                    // 更新 sizeCtl 为负数后，开始扩容。
                     transfer(tab, null);
                 s = sumCount();
             }
@@ -2423,8 +2503,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                     if (U.compareAndSwapInt(this, SIZECTL, sc, sc + 1))
                         transfer(tab, nt);
                 }
-                // 1. 将 sizeCtl 设置为 (rs << RESIZE_STAMP_SHIFT) + 2)
-                //     我是没看懂这个值真正的意义是什么？不过可以计算出来的是，结果是一个比较大的负数
+                // 1. 将 sizeCtl 设置为 (rs << RESIZE_STAMP_SHIFT) + 2)，结果是一个比较大的负数
                 //  调用 transfer 方法，此时 nextTab 参数为 null
                 else if (U.compareAndSwapInt(this, SIZECTL, sc,
                                              (rs << RESIZE_STAMP_SHIFT) + 2))
@@ -2433,20 +2512,24 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         }
     }
 
+
+
+
     /**
      * Moves and/or copies the nodes in each bin to new table. See
      * above for explanation.
      * 将原来的 tab 数组的元素迁移到新的 nextTab 数组中
+     *
      */
     private final void transfer(Node<K,V>[] tab, Node<K,V>[] nextTab) {
         int n = tab.length, stride;
         // stride 在单核下直接等于 n，多核模式下为 (n>>>3)/NCPU，最小值是 16
-        // stride 可以理解为”步长“，有 n 个位置是需要进行迁移的，
+        // stride 可理解为”步长“，有 n 个位置是需要进行迁移的，
         // 将这 n 个任务分为多个任务包，每个任务包有 stride 个任务
         if ((stride = (NCPU > 1) ? (n >>> 3) / NCPU : n) < MIN_TRANSFER_STRIDE)
             stride = MIN_TRANSFER_STRIDE; // subdivide range
         //  如果 nextTab 为 null，先进行一次初始化
-        //  前面我们说了，外围会保证第一个发起迁移的线程调用此方法时，参数 nextTab 为 null
+        //  外围会保证第一个发起迁移的线程调用此方法时，参数 nextTab 为 null
         //  之后参与迁移的线程调用此方法时，nextTab 不会为 null
         if (nextTab == null) {            // initiating
             try {
@@ -2466,9 +2549,9 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         int nextn = nextTab.length;
 
 
-        // ForwardingNode 翻译过来就是正在被迁移的 Node
-        // 这个构造方法会生成一个Node，key、value 和 next 都为 null，关键是 hash 为 MOVED
-        // 后面我们会看到，原数组中位置 i 处的节点完成迁移工作后，
+        //  ForwardingNode 就是正在被迁移的 Node
+        //  这个构造方法会生成一个Node，key、value 和 next 都为 null，关键是 hash 为 MOVED
+        //  后面我们会看到，原数组中位置 i 处的节点完成迁移工作后，
         //    就会将位置 i 处设置为这个 ForwardingNode，用来告诉其他线程该位置已经处理过了
         //    所以它其实相当于是一个标志。
 
@@ -2636,11 +2719,16 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * A padded cell for distributing counts.  Adapted from LongAdder
      * and Striped64.  See their internal docs for explanation.
      */
+    // 这个内部类是用来计数的 只有一个属性value ConcurrentHashMap通过汇总一个CounterCell数组所有CounterCell的值来实现计数
     @sun.misc.Contended static final class CounterCell {
         volatile long value;
         CounterCell(long x) { value = x; }
     }
 
+
+    //这个是统计有多少键值对的方法
+    // 就是遍历CounterCell数组然后依次相加value 最后返回总和
+    // 求 元素 总和
     final long sumCount() {
         CounterCell[] as = counterCells; CounterCell a;
         long sum = baseCount;
@@ -2653,6 +2741,11 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         return sum;
     }
 
+
+
+
+    // 这个是进入自旋循环的一个添加键值对总数的方法 和LongAdder的累加机制基本一致
+    // 之前的addCount方法在cas操作失败后进入这个fullAddCount方法 防止cas自旋
     // See LongAdder version for explanation
     private final void fullAddCount(long x, boolean wasUncontended) {
         int h;

@@ -110,7 +110,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
 
     /**
      * Base of synchronization control for this lock. Subclassed
-     * into fair and nonfair versions below. Uses AQS state to
+     * into fair and nonfair versions below. Uses aqs state to
      * represent the number of holds on the lock.
      */
     abstract static class Sync extends AbstractQueuedSynchronizer {
@@ -230,7 +230,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
          */
         protected final boolean tryAcquire(int acquires) {
             final Thread current = Thread.currentThread(); // 获取当前线程
-            int c = getState();// 获取父类 AQS 中的标志位
+            int c = getState();// 获取父类 aqs 中的标志位
 
             if (c == 0) {
                 if (!hasQueuedPredecessors() &&  // 如果队列中没有其他线程  说明没有线程正在占有锁！

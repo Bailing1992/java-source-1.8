@@ -1301,7 +1301,7 @@ public class StampedLock implements java.io.Serializable {
      * serves as a conditional form of release, which is not currently
      * needed but may be needed under possible future cancellation
      * policies). This is a variant of cancellation methods in
-     * AbstractQueuedSynchronizer (see its detailed explanation in AQS
+     * AbstractQueuedSynchronizer (see its detailed explanation in aqs
      * internal documentation).
      *
      * @param node if nonnull, the waiter

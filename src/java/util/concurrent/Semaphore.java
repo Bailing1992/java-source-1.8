@@ -159,7 +159,7 @@ public class Semaphore implements java.io.Serializable {
     private final Sync sync;
 
     /**
-     * Synchronization implementation for semaphore.  Uses AQS state
+     * Synchronization implementation for semaphore.  Uses aqs state
      * to represent permits. Subclassed into fair and nonfair
      * versions.
      */

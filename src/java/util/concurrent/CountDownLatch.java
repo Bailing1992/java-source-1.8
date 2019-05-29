@@ -156,7 +156,7 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 public class CountDownLatch {
     /**
      * Synchronization control For CountDownLatch.
-     * Uses AQS state to represent count.
+     * Uses aqs state to represent count.
      */
     private static final class Sync extends AbstractQueuedSynchronizer {
         private static final long serialVersionUID = 4982264981922014374L;
