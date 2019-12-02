@@ -63,8 +63,7 @@ import sun.misc.Unsafe;
  * @since 1.4
  */
 
-public abstract class MappedByteBuffer
-    extends ByteBuffer
+public abstract class MappedByteBuffer extends ByteBuffer
 {
 
     // This is a little bit backwards: By rights MappedByteBuffer should be a
@@ -74,6 +73,7 @@ public abstract class MappedByteBuffer
 
     // For mapped buffers, a FileDescriptor that may be used for mapping
     // operations if valid; null if the buffer is not mapped.
+    // // 对应的文件描述符
     private final FileDescriptor fd;
 
     // This should only be invoked by the DirectByteBuffer constructors

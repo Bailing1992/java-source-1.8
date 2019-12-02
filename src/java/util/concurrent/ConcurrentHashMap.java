@@ -957,8 +957,14 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 if ((ek = e.key) == key || (ek != null && key.equals(ek)))
                     return e.val;
             }
+            //hash值为负值表示正在扩容，这个时候查的是ForwardingNode的find方法来定位到nextTable来
+            //eh=-1，说明该节点是一个ForwardingNode，正在迁移，此时调用ForwardingNode的find方法去nextTable里找。
+            //eh=-2，说明该节点是一个TreeBin，此时调用TreeBin的find方法遍历红黑树，由于红黑树有可能正在旋转变色，所以find里会有读写锁。
+            //eh>=0，说明该节点下挂的是一个链表，直接遍历该链表即可。
             else if (eh < 0)
                 return (p = e.find(h, key)) != null ? p.val : null;
+
+
             while ((e = e.next) != null) {
                 if (e.hash == h &&
                     ((ek = e.key) == key || (ek != null && key.equals(ek))))
@@ -1045,7 +1051,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                              new Node<K,V>(hash, key, value, null)))
                     break;                   // no lock when adding to empty bin
             }
-            // hash 等于 MOVED,是因为在扩容
+            // hash 等于 MOVED, 是因为在扩容
             else if ((fh = f.hash) == MOVED)
                 // 帮助数据迁移，这个等到看完数据迁移部分的介绍后，再理解这个就很简单了
                 tab = helpTransfer(tab, f);
@@ -2350,14 +2356,8 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         // 如果计数盒子不是空 或者 修改 baseCount 失败
         if ((as = counterCells) != null ||
             !U.compareAndSwapLong(this, BASECOUNT, b = baseCount, s = b + x)) {
-
-
             CounterCell a; long v; int m;
             boolean uncontended = true;
-
-
-
-
             // 如果多个线程都在执行，则CAS失败，执行fullAddCount，全部加入count
 
             // 如果计数盒子是空（尚未出现并发）
@@ -2433,12 +2433,14 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         Node<K,V>[] nextTab; int sc;
         if (tab != null && (f instanceof ForwardingNode) &&
             (nextTab = ((ForwardingNode<K,V>)f).nextTable) != null) {
+
             int rs = resizeStamp(tab.length);
             while (nextTab == nextTable && table == tab &&
                    (sc = sizeCtl) < 0) {
                 if ((sc >>> RESIZE_STAMP_SHIFT) != rs || sc == rs + 1 ||
                     sc == rs + MAX_RESIZERS || transferIndex <= 0)
                     break;
+
                 if (U.compareAndSwapInt(this, SIZECTL, sc, sc + 1)) {
                     transfer(tab, nextTab);
                     break;
@@ -2489,8 +2491,6 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 // 之后可能是继续 sizeCtl 加 1，并执行 transfer(tab, nt)。
                 // 所以，可能的操作就是执行 1 次 transfer(tab, null) + 多次 transfer(tab, nt)，
                 // 这里怎么结束循环的需要看完 transfer 源码才清楚。
-
-
                 int rs = resizeStamp(n);
                 if (sc < 0) {
                     Node<K,V>[] nt;
@@ -2600,7 +2600,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                     sizeCtl = (n << 1) - (n >>> 1);
                     return;
                 }
-                // 之前我们说过，sizeCtl 在迁移前会设置为 (rs << RESIZE_STAMP_SHIFT) + 2
+                // sizeCtl 在迁移前会设置为 (rs << RESIZE_STAMP_SHIFT) + 2
                 // 然后，每有一个线程参与迁移就会将 sizeCtl 加 1，
                 // 这里使用 CAS 操作对 sizeCtl 进行减 1，代表做完了属于自己的任务
                 if (U.compareAndSwapInt(this, SIZECTL, sc = sizeCtl, sc - 1)) {

@@ -189,6 +189,7 @@ public abstract class Buffer {
 
     // Used only by direct buffers
     // NOTE: hoisted here for speed in JNI GetDirectBufferAddress
+    // 映射内存地址
     long address;
 
     // Creates a new buffer with the given mark, position, limit, and capacity,

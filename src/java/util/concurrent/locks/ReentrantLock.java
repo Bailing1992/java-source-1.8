@@ -239,7 +239,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
                     return true;
                 }
             }
-            // // 如果不为 0 意味着，锁已经被拿走了，但是，因为 ReentrantLock 是重入锁
+            // 如果不为 0 意味着，锁已经被拿走了，但是，因为 ReentrantLock 是重入锁
             // 是可以重复 lock,unlock 的，只要成对出现就行
             else if (current == getExclusiveOwnerThread()) {
                 int nextc = c + acquires;

@@ -383,7 +383,10 @@ public abstract class AbstractQueuedSynchronizer
      * expert group, for helpful ideas, discussions, and critiques
      * on the design of this class.
      */
-    // AbstractQueuedSynchronizer类有两个内部类，分别为 Node类与ConditionObject类。
+    // AQS有两个内部类，分别为 Node类与ConditionObject类。
+
+    // Node结点是对每一个访问同步代码的线程的封装，
+    // 其包含了需要同步的线程本身以及线程的状态，如是否被阻塞，是否等待唤醒，是否已经被取消等。
     static final class Node {
         /** Marker to indicate a node is waiting in shared mode */
         // 模式，分为共享与独占
@@ -615,7 +618,7 @@ public abstract class AbstractQueuedSynchronizer
      */
     // enq函数会使用无限循环来确保节点的成功插入。
     private Node enq(final Node node) {
-        // 无限循环，确保结点能够成功入队列
+        //CAS"自旋"，直到成功加入队尾.CAS自旋volatile变量，是一种很经典的用法。
         for (;;) {
             // 保存尾结点
             Node t = tail;
@@ -645,14 +648,14 @@ public abstract class AbstractQueuedSynchronizer
      * @param mode Node.EXCLUSIVE for exclusive, Node.SHARED for shared
      * @return the new node
      */
-    // 添加等待者
+    // 此方法用于将当前线程加入到等待队列的队尾，并返回当前线程所在的结点。
     // addWaiter函数使用快速添加的方式往sync queue尾部添加结点，
     // 如果sync queue队列还没有初始化，则会使用enq插入队列中
     private Node addWaiter(Node mode) {
-        // 新生成一个结点，默认为独占模式
+        //以给定模式构造结点。mode有两种：EXCLUSIVE（独占）和SHARED（共享）
         Node node = new Node(Thread.currentThread(), mode);
         // Try the fast path of enq; backup to full enq on failure
-        // 保存尾结点
+        //尝试快速方式直接放到队尾。
         Node pred = tail;
         // 尾结点不为空，即已经被初始化
         if (pred != null) {
@@ -944,25 +947,29 @@ public abstract class AbstractQueuedSynchronizer
     // 设置头结点为当前节点，返回。否则，调用shouldParkAfterFailedAcquire和parkAndCheckInterrupt函数
     final boolean acquireQueued(final Node node, int arg) {
         // 标志
-        boolean failed = true;
+        boolean failed = true;//标记是否成功拿到资源
         try {
             // 中断标志
-            boolean interrupted = false;
+            boolean interrupted = false; //标记等待过程中是否被中断过
             // 无限循环
             for (;;) {
                 // 获取node节点的前驱结点
                 final Node p = node.predecessor();
                 // 如果当前的节点是 head 说明他是队列中第一个“有效的”节点，因此尝试获取锁
+                // 如果前驱是head，即该结点已成老二，
+                // 那么便有资格去尝试获取资源（可能是老大释放完资源唤醒自己的，当然也可能被interrupt了）。
+
                 if (p == head && tryAcquire(arg)) {
                     // 前驱为头结点并且成功获得锁
-                    setHead(node);// 成功后，将上图中的黄色节点移除
+                    setHead(node);//拿到资源后，将head指向该结点。所以head所指的标杆结点，就是当前获取到资源的那个结点或null。
                     // 设置头结点
-                    p.next = null; // help GC
+                    p.next = null; // setHead中node.prev已置为null，此处再将head.next置为null，就是为了方便GC回收以前的head结点。也就意味着之前拿完资源的结点出队了！
                     failed = false;// 设置标志
 
-                    return interrupted;
+                    return interrupted; //返回等待过程中是否被中断过
                 }
-                // 否则，检查前一个节点的状态为，看当前获取锁失败的线程是否需要挂起。
+                // 否则，检查前一个节点的状态，看当前获取锁失败的线程是否需要挂起。
+                // 如果自己可以休息了，就进入waiting状态，直到被unpark()
                 if (shouldParkAfterFailedAcquire(p, node) &&
                         // 如果需要，借助 JUC 包下的 LockSopport 类的静态方法 Park 挂起
                     parkAndCheckInterrupt())
@@ -1170,6 +1177,7 @@ public abstract class AbstractQueuedSynchronizer
      *         correctly.
      * @throws UnsupportedOperationException if exclusive mode is not supported
      */
+    //此方法尝试去获取独占资源。如果获取成功，则直接返回true，否则直接返回false
     protected boolean tryAcquire(int arg) {
         throw new UnsupportedOperationException();
     }
@@ -1292,15 +1300,15 @@ public abstract class AbstractQueuedSynchronizer
      *        {@link #tryAcquire} but is otherwise uninterpreted and
      *        can represent anything you like.
      */
-    // 该函数以独占模式获取(资源)，忽略中断，即线程在aquire过程中，中断此线程是无效的。
+    // 该函数是独占模式下线程获取共享资源的顶层入口，忽略中断，即线程在acquire过程中，中断此线程是无效的。
     public final void acquire(int arg) {
-        // 首先调用tryAcquire函数，调用此方法的线程 会试图在独占模式下获取对象状态。
-        // 此方法应该查询是否允许它在独占模式下获取对象状态，如果允许，则获取它。
+        //tryAcquire()尝试直接去获取资源，如果成功则直接返回；
         if (!tryAcquire(arg) &&
-                // 若 tryAcquire 失败，则调用addWaiter函数，
-                // addWaiter函数完成的功能是将调用此方法的线程封装成为一个结点并放入Sync queue。
-                // 调用acquireQueued 函数，此函数完成的功能是 Sync queue 中的结点不断尝试获取资源，若成功，则返回true，否则，返回false。
+                // addWaiter()将该线程加入等待队列的尾部，并标记为独占模式
+                // acquireQueued()使线程在等待队列中获取资源，一直获取到资源后才返回。
+                // 如果在整个等待过程中被中断过，则返回true，否则返回false。。
             acquireQueued(addWaiter(Node.EXCLUSIVE), arg))
+            //   如果线程在等待过程中被中断过，它是不响应的。只是获取资源后才再进行自我中断selfInterrupt()，将中断补上。
             selfInterrupt();
     }
 

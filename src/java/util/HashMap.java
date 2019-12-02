@@ -496,6 +496,7 @@ public class HashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>, Cloneabl
             throw new IllegalArgumentException("Illegal load factor: " +
                                                loadFactor);
 
+
         this.loadFactor = loadFactor;
         // HashMap进行桶扩容的阈值，它的值等于 HashMap 的容量乘以负载因子
         this.threshold = tableSizeFor(initialCapacity);

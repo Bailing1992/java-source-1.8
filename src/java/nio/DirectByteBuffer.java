@@ -186,6 +186,8 @@ class DirectByteBuffer extends MappedByteBuffer implements DirectBuffer
         return new DirectByteBuffer(this, -1, 0, rem, rem, off);
     }
 
+
+
     public ByteBuffer duplicate() {
         return new DirectByteBuffer(this,
                                               this.markValue(),
@@ -214,6 +216,8 @@ class DirectByteBuffer extends MappedByteBuffer implements DirectBuffer
         return address;
     }
 
+    // 由于已经通过map0()函数返回内存文件映射的address，
+    // 这样就无需调用read或write方法对文件进行读写，通过address就能够操作文件。底层采用unsafe.getByte方法，通过（address + 偏移量）获取指定内存的数据。
     private long ix(int i) {
         return address + ((long)i << 0);
     }
