@@ -77,6 +77,12 @@ import java.util.function.Consumer;
  * @author Doug Lea
  * @param <E> the type of elements held in this collection
  */
+/**
+ *
+ * 使用独占锁实现的阻塞队列 LinkedBlockingQueue 是一个用链表实现的有界阻塞队列。此队列的默认和最大长度为
+ * Integer.MAX_VALUE。此队列按照先进先出的原则对元素进行排序。
+ *
+ * */
 public class LinkedBlockingQueue<E> extends AbstractQueue<E>
 
         implements BlockingQueue<E>, java.io.Serializable {
@@ -121,7 +127,7 @@ public class LinkedBlockingQueue<E> extends AbstractQueue<E>
     /**
      * Linked list node class
      */
-    // 单向链表
+    // 单向链表：
     // 每个添加到LinkedBlockingQueue队列中的数据都将被封装成Node节点
     // 添加的链表队列中，其中head和last分别指向队列的头结点和尾结点。
     static class Node<E> {

@@ -85,6 +85,11 @@ import java.util.function.Consumer;
  * @author Doug Lea
  * @param <E> the type of elements held in this collection
  */
+/**
+ *
+ * LinkedTransferQueue是一个由链表结构组成的无界阻塞TransferQueue队列。相对于其他阻
+ * 塞队列，LinkedTransferQueue多了tryTransfer和transfer方法。
+ * */
 public class LinkedTransferQueue<E> extends AbstractQueue<E>
     implements TransferQueue<E>, java.io.Serializable {
     private static final long serialVersionUID = -3223113410248163686L;
@@ -676,6 +681,9 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
      * different mode, else s's predecessor, or s itself if no
      * predecessor
      */
+    /**
+     * 试图把存放当前元素的s节点作为tail节点
+     * */
     private Node tryAppend(Node s, boolean haveData) {
         for (Node t = tail, p = t;;) {        // move p to last node and append
             Node n, u;                        // temps for reads of next & tail
@@ -714,6 +722,11 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
      * @param nanos timeout in nanosecs, used only if timed is true
      * @return matched item, or e if unmatched on interrupt or timeout
      */
+    /**
+     * 让CPU自旋等待消费者消费元素。
+     * 因为自旋会消耗CPU，所以自旋一定的次数后使用Thread.yield()方法来暂停
+     * 当前正在执行的线程，并执行其他线程。
+     * */
     private E awaitMatch(Node s, Node pred, E e, boolean timed, long nanos) {
         final long deadline = timed ? System.nanoTime() + nanos : 0L;
         Thread w = Thread.currentThread();
@@ -1237,6 +1250,13 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
      *
      * @throws NullPointerException if the specified element is null
      */
+    /**
+     *
+     * tryTransfer 方法用来试探生产者传入的元素是否能直接传给消费者。如果没有消费者等待接收元素，则返回false。
+     * 和transfer 方法的区别是tryTransfer方法无论消费者是否接收，方法立即返回，
+     * 而transfer 方法是必须等到消费者消费了才返回。
+     *
+     * */
     public boolean tryTransfer(E e) {
         return xfer(e, true, NOW, 0) == null;
     }
@@ -1252,6 +1272,13 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
      *
      * @throws NullPointerException if the specified element is null
      */
+    /**
+     *
+     * 如果当前有消费者正在等待接收元素（消费者使用 take() 方法或带时间限制的 poll() 方法时），
+     * transfer 方法可以把生产者传入的元素立刻 transfer（传输）给消费者。如果没有消费者在等
+     * 待接收元素， transfer 方法会将元素存放在队列的 tail 节点，并等到该元素被消费者消费了才返回
+     *
+     * */
     public void transfer(E e) throws InterruptedException {
         if (xfer(e, true, SYNC, 0) != null) {
             Thread.interrupted(); // failure possible only due to interrupt
@@ -1273,6 +1300,12 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
      *
      * @throws NullPointerException if the specified element is null
      */
+
+    /**
+     * 对于带有时间限制的tryTransfer（E e，long timeout，TimeUnit unit）方法，试图把生产者传入
+     * 的元素直接传给消费者，但是如果没有消费者消费该元素则等待指定的时间再返回，如果超
+     * 时还没消费元素，则返回false，如果在超时时间内消费了元素，则返回true。
+     * */
     public boolean tryTransfer(E e, long timeout, TimeUnit unit)
         throws InterruptedException {
         if (xfer(e, true, TIMED, unit.toNanos(timeout)) == null)

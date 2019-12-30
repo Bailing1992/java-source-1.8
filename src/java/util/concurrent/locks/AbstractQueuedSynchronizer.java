@@ -286,7 +286,9 @@ import sun.misc.Unsafe;
  * @since 1.5
  * @author Doug Lea
  */
-// 在锁框架中，AQS抽象类占据着核心地位，它提供了一个FIFO队列，可以用于构建锁或者其他相关同步装置的基础框架.
+// 在锁框架中，AQS 抽象类占据着核心地位，它提供了一个FIFO队列，可以用于构建锁或者其他相关同步装置的基础框架.
+    // 它使用了一个int成员变量表示同步状态
+    // 通过内置的FIFO队列来完成资源获取线程的排队工作
 public abstract class AbstractQueuedSynchronizer
     extends AbstractOwnableSynchronizer
     implements java.io.Serializable {
@@ -378,7 +380,7 @@ public abstract class AbstractQueuedSynchronizer
      * expert group, for helpful ideas, discussions, and critiques
      * on the design of this class.
      */
-    // AQS 有两个内部类，分别为 Node类与ConditionObject类。
+    // AQS 有两个内部类，分别为 Node 类与 ConditionObject 类。
 
     // Node 结点是对每个访问同步代码的线程的封装，
     // 其包含了需要同步的线程本身以及线程的状态，如是否被阻塞，是否等待唤醒，是否已经被取消等。
@@ -443,10 +445,11 @@ public abstract class AbstractQueuedSynchronizer
          * CONDITION for condition nodes.  It is modified using CAS
          * (or when possible, unconditional volatile writes).
          */
-        // 结点状态
-        // aqs 的队列中，在有并发时，肯定会存取一定数量的节点，
-        // 每个节点 的线程状态，有的线程可能“等不及”获取锁了，需要放弃竞争，退出队列，有的线程在等待一些条件满足，满足后才恢复执行
-        // 总之，各个线程有各个线程的状态，但总需要一个变量来描述它，这个变量就叫 waitStatus, 它有四种状态：
+        /** 等待状态，有四种状态：
+         * 1. cancelled 1: 线程需要从同步队列中取消等待，原因可能是因为线程等待超时或者被中断，节点进入改状态后不会发生变化
+         * 2. signal -1: 处于等待状态。若当前节点的线程释放了同步状态或者被取消，将会通知后继节点，使后继节点的线程得以运行
+         * 3. condition -2: 节点在等待对列中，节点线程等待在condition上
+         */
         volatile int waitStatus;
 
         /**
@@ -608,16 +611,17 @@ public abstract class AbstractQueuedSynchronizer
      * @param node the node to insert
      * @return node's predecessor
      */
-    // enq 函数会使用无限循环来确保节点的成功插入
+    // enq 函数会使用无限循环来确保节点的成功插入，
+    // 将并发添加节点的请求通过CAS变得串行化了
     private Node enq(final Node node) {
-        // CAS"自旋"，直到成功加入队尾. CAS自旋volatile变量，是一种很经典的用法。
+        // CAS "自旋"，直到成功加入队尾. CAS 自旋 volatile 变量，是一种很经典的用法。
         for (;;) {
             // 保存尾结点
             Node t = tail;
             if (t == null) { // Must initialize
                 // 尾结点为空，即还没被初始化
-                if (compareAndSetHead(new Node())) // 头结点为空，并设置头结点为新生成的结点
-                    // 头结点与尾结点都指向同一个新生结点
+                if (compareAndSetHead(new Node())) // 设置头结点为新生成的空结点
+                    // 头结点与尾结点都指向同一个新空结点
                     tail = head;
             } else {
                 // 尾结点不为空，即已经被初始化过
@@ -627,7 +631,6 @@ public abstract class AbstractQueuedSynchronizer
                 if (compareAndSetTail(t, node)) {
                     // 设置尾结点的next域为node
                     t.next = node; // 返回尾结点
-
                     return t;
                 }
             }
@@ -641,10 +644,10 @@ public abstract class AbstractQueuedSynchronizer
      * @return the new node
      */
     // 此方法用于将当前线程加入到等待队列的队尾，并返回当前线程所在的结点。
-    // addWaiter函数使用快速添加的方式往sync queue尾部添加结点，
-    // 如果sync queue队列还没有初始化，则会使用enq插入队列中
+    // addWaiter 函数使用快速添加的方式往sync queue尾部添加结点，
+    // 如果 sync queue 队列还没有初始化，则会使用enq插入队列中
     private Node addWaiter(Node mode) {
-        //以给定模式构造结点。mode有两种：EXCLUSIVE（独占）和SHARED（共享）
+        // 以给定模式构造结点。mode 有两种：EXCLUSIVE（独占）和SHARED（共享）
         Node node = new Node(Thread.currentThread(), mode);
         // Try the fast path of enq; backup to full enq on failure
         //尝试快速方式直接放到队尾。
@@ -653,7 +656,7 @@ public abstract class AbstractQueuedSynchronizer
         if (pred != null) {
             // 将node结点的prev域连接到尾结点
             node.prev = pred;
-            // 比较pred是否为尾结点，是则将尾结点设置为node
+            // 比较 pred 是否为尾结点，是则将尾结点设置为 node. 保证节点能够被线程安全的添加
             if (compareAndSetTail(pred, node)) {
                 // 设置尾结点的next域为node
                 pred.next = node;
@@ -691,7 +694,7 @@ public abstract class AbstractQueuedSynchronizer
          * to clear in anticipation of signalling.  It is OK if this
          * fails or if status is changed by waiting thread.
          */
-        // 获取node结点的等待状态
+        // 获取 node 结点的等待状态
         int ws = node.waitStatus;
         if (ws < 0)// 状态值小于0，为SIGNAL -1 或 CONDITION -2 或 PROPAGATE -3
             // 比较并且设置结点等待状态，设置为0
@@ -824,11 +827,11 @@ public abstract class AbstractQueuedSynchronizer
 
         // If we are the tail, remove ourselves.
         if (node == tail && compareAndSetTail(node, pred)) {
-            // node结点为尾结点，则设置尾结点为pred结点
-            // 比较并设置pred结点的next节点为null
+            // node 结点为尾结点，则设置尾结点为pred结点
+            // 比较并设置 pred 结点的next节点为null
             compareAndSetNext(pred, predNext, null);
         } else {
-            // node结点不为尾结点，或者比较设置不成功
+            // node 结点不为尾结点，或者比较设置不成功
             // If successor needs signal, try to set pred's next-link
             // so it will get one. Otherwise wake it up to propagate.
             int ws;
@@ -843,7 +846,7 @@ public abstract class AbstractQueuedSynchronizer
                     // 后继不为空并且后继的状态小于等于0
                     compareAndSetNext(pred, predNext, next); // 比较并设置pred.next = next;
             } else {
-                unparkSuccessor(node);// 释放node的前一个结点
+                unparkSuccessor(node); // 释放node的下一个结点
             }
 
             node.next = node; // help GC
@@ -860,11 +863,11 @@ public abstract class AbstractQueuedSynchronizer
      * @return {@code true} if thread should block
      */
     // 当 获取(资源)失败后，检查并且更新结点状态;
-    // 只有当该节点的前驱结点的状态为SIGNAL时，才可以对该结点所封装的线程进行park操作。
+    // 只有当该节点的前驱结点的状态为SIGNAL时，才可以对该结点所封装的线程进行 park 操作。
     private static boolean shouldParkAfterFailedAcquire(Node pred, Node node) {
         // 获取前驱结点的状态
         int ws = pred.waitStatus;
-        // 状态为SIGNAL，为-1
+        // 状态为 SIGNAL，为-1
         if (ws == Node.SIGNAL)
             /*
              * This node has already set status asking a release
@@ -872,25 +875,29 @@ public abstract class AbstractQueuedSynchronizer
              */
             // 可以进行 park 操作
             return true;
-        // 表示状态为CANCELLED，为1
-        if (ws > 0) {// 表示状态为CANCELLED，为1
-            /*
+        // 表示状态为CANCELLED，为 1
+        if (ws > 0) {
+            /**
              * Predecessor was cancelled. Skip over predecessors and
              * indicate retry.
+             * 找到 pred 结点前面最近的一个状态不为CANCELLED的结点
              */
             do {
                 node.prev = pred = pred.prev;
 
-            } while (pred.waitStatus > 0); // 找到pred结点前面最近的一个状态不为CANCELLED的结点
+            } while (pred.waitStatus > 0);
+
+
             pred.next = node;// 赋值pred结点的next域
         } else {
-            // 为PROPAGATE -3 或者是0 表示无状态,(为CONDITION -2时，表示此节点在condition queue中)
+            // 为PROPAGATE -3 或者是0 表示无状态,
+            // 为CONDITION -2 表示此节点在condition queue中
             /*
              * waitStatus must be 0 or PROPAGATE.  Indicate that we
              * need a signal, but don't park yet.  Caller will need to
              * retry to make sure it cannot acquire before parking.
              */
-            // 比较并设置前驱结点的状态为SIGNAL
+            // 比较并设置前驱结点的状态为 SIGNAL
             compareAndSetWaitStatus(pred, ws, Node.SIGNAL);
         }
         // 不能进行park操作
@@ -911,7 +918,7 @@ public abstract class AbstractQueuedSynchronizer
      */
     // 进行park操作并且返回该线程是否被中断
     private final boolean parkAndCheckInterrupt() {
-        // 在许可可用之前禁用当前线程，并且设置了blocker
+        // 在 许可证 可用之前禁用当前线程，并且设置了blocker阻碍者
         LockSupport.park(this);
         // 当前线程是否已被中断，并清除中断标记位
         return Thread.interrupted();
@@ -934,36 +941,43 @@ public abstract class AbstractQueuedSynchronizer
      * @param arg the acquire argument
      * @return {@code true} if interrupted while waiting
      */
-    // sync队列中的结点在独占且忽略中断的模式下获取(资源)
-    // 首先获取当前节点的前驱节点，如果前驱节点是头结点并且能够获取(资源)，代表该当前节点能够占有锁，
-    // 设置头结点为当前节点，返回。否则，调用shouldParkAfterFailedAcquire和parkAndCheckInterrupt函数
+
+    /**
+     * 进入一个自旋的过程，每个节点（每个线程）都在自省的观察，当条件满足，获取到了同步状态，就可以从这个自旋过程中推出。
+     * 否则依旧留在这个自旋过程中（并会阻塞节点的线程）
+     */
     final boolean acquireQueued(final Node node, int arg) {
         // 标志
-        boolean failed = true;//标记是否成功拿到资源
+        boolean failed = true; // 标记 是否成功拿到资源
         try {
             // 中断标志
-            boolean interrupted = false; //标记等待过程中是否被中断过
+            boolean interrupted = false; // 标记 等待过程中 是否被中断过
             // 无限循环
             for (;;) {
-                // 获取node节点的前驱结点
+                // 获取 node 节点的前驱结点
                 final Node p = node.predecessor();
-                // 如果当前的节点是 head 说明他是队列中第一个“有效的”节点，因此尝试获取锁
-                // 如果前驱是head，即该结点已成老二，
-                // 那么便有资格去尝试获取资源（可能是老大释放完资源唤醒自己的，当然也可能被interrupt了）。
 
+                /**
+                 *
+                 * 只有 前驱节点 是头节点才能够尝试获取同步状态
+                 * 第一，头节点是成功获取到同步状态的节点，而头节点的线程释放了同步状态之后，将会
+                 * 唤醒其后继节点，后继节点的线程被唤醒后需要检查自己的前驱节点是否是头节点。
+                 *
+                 * 第二，维护同步队列的 FIFO 原则。该方法中，节点自旋获取同步状态的行为
+                 * */
                 if (p == head && tryAcquire(arg)) {
-                    // 前驱为头结点并且成功获得锁
-                    setHead(node);//拿到资源后，将head指向该结点。所以head所指的标杆结点，就是当前获取到资源的那个结点或null。
-                    // 设置头结点
-                    p.next = null; // setHead中node.prev已置为null，此处再将head.next置为null，就是为了方便GC回收以前的head结点。也就意味着之前拿完资源的结点出队了！
+                    //  前驱为头结点并且成功获得锁
+                    setHead(node);// 拿到资源后，将 head 指向该结点。head 指向的是 当前获取到资源的那个结点或 null。
+                    //  设置头结点
+                    p.next = null; // setHead 中 node.prev 已置为null，此处再将head.next置为null，就是为了方便 GC 回收以前的head结点。也就意味着之前拿完资源的结点出队了！
                     failed = false;// 设置标志
 
                     return interrupted; //返回等待过程中是否被中断过
                 }
                 // 否则，检查前一个节点的状态，看当前获取锁失败的线程是否需要挂起。
-                // 如果自己可以休息了，就进入waiting状态，直到被unpark()
+                // 如果自己可以休息了，就进入 waiting 状态， 直到被unPark()
                 if (shouldParkAfterFailedAcquire(p, node) &&
-                        // 如果需要，借助 JUC 包下的 LockSopport 类的静态方法 Park 挂起
+                        // 如果需要，借助 JUC 包下的 LockSupport 类的静态方法 Park 挂起
                     parkAndCheckInterrupt())
                     interrupted = true;
             }
@@ -976,6 +990,8 @@ public abstract class AbstractQueuedSynchronizer
     /**
      * Acquires in exclusive interruptible mode.
      * @param arg the acquire argument
+     *
+     * 在获取同步状态失败后就会调用doAcquireInterruptibly方法
      */
     private void doAcquireInterruptibly(int arg)
         throws InterruptedException {
@@ -1041,6 +1057,11 @@ public abstract class AbstractQueuedSynchronizer
     /**
      * Acquires in shared uninterruptible mode.
      * @param arg the acquire argument
+     *
+     *
+     * 在doAcquireShared(int arg)方法的自旋过程中，
+     * 如果当前节点的前驱为头节点时，尝试获取同步状态，如果返回值大于等于0，
+     * 表示该次获取同步状态成功并从自旋过程中退出。
      */
     private void doAcquireShared(int arg) {
         final Node node = addWaiter(Node.SHARED);
@@ -1231,6 +1252,9 @@ public abstract class AbstractQueuedSynchronizer
      *         thrown in a consistent fashion for synchronization to work
      *         correctly.
      * @throws UnsupportedOperationException if shared mode is not supported
+     *
+     * tryAcquireShared(int arg)方法返回值为int类型，当返回值大于等于0时，表示能够获取到同
+     * 步状态
      */
     protected int tryAcquireShared(int arg) {
         throw new UnsupportedOperationException();
@@ -1295,11 +1319,11 @@ public abstract class AbstractQueuedSynchronizer
      */
     // 该函数是独占模式下线程获取共享资源的顶层入口，忽略中断，即线程在acquire过程中，中断此线程是无效的。
     public final void acquire(int arg) {
-        //tryAcquire()尝试直接去获取资源，如果成功则直接返回；
+        // tryAcquire() 尝试直接去获取资源，如果成功则直接返回
         if (!tryAcquire(arg) &&
-                // addWaiter()将该线程加入等待队列的尾部，并标记为独占模式
-                // acquireQueued()使线程在等待队列中获取资源，一直获取到资源后才返回。
-                // 如果在整个等待过程中被中断过，则返回true，否则返回false。。
+                // addWaiter() 将该线程加入等待队列的尾部，并标记为独占模式
+                // acquireQueued() 使线程在等待队列中获取资源，一直获取到资源后才返回。
+                // 如果在整个等待过程中被中断过，则返回true，否则返回false
             acquireQueued(addWaiter(Node.EXCLUSIVE), arg))
             //   如果线程在等待过程中被中断过，它是不响应的。只是获取资源后才再进行自我中断selfInterrupt()，将中断补上。
             selfInterrupt();
@@ -1362,6 +1386,7 @@ public abstract class AbstractQueuedSynchronizer
      *        can represent anything you like.
      * @return the value returned from {@link #tryRelease}
      */
+    // 在独占模式下
     public final boolean release(int arg) {
         if (tryRelease(arg)) {
             Node h = head;
@@ -1382,6 +1407,7 @@ public abstract class AbstractQueuedSynchronizer
      * @param arg the acquire argument.  This value is conveyed to
      *        {@link #tryAcquireShared} but is otherwise uninterpreted
      *        and can represent anything you like.
+     *            共享式地获取同步状态
      */
     public final void acquireShared(int arg) {
         if (tryAcquireShared(arg) < 0)
@@ -1657,6 +1683,8 @@ public abstract class AbstractQueuedSynchronizer
      * more extensive monitoring facilities.
      *
      * @return the collection of threads
+     *
+     * 该方法返回正在等待获取锁的线程列表，由于列表是逆序输出，为了方便观察结果，将其进行反转。
      */
     public final Collection<Thread> getQueuedThreads() {
         ArrayList<Thread> list = new ArrayList<Thread>();
@@ -1956,10 +1984,10 @@ public abstract class AbstractQueuedSynchronizer
     public class ConditionObject implements Condition, java.io.Serializable {
         private static final long serialVersionUID = 1173984872572414699L;
         /** First node of condition queue. */
-        // condition队列的头结点
+        // condition 队列的头结点
         private transient Node firstWaiter;
         /** Last node of condition queue. */
-        // condition队列的尾结点
+        // condition 队列的尾结点
         private transient Node lastWaiter;
 
         /**
@@ -1979,7 +2007,7 @@ public abstract class AbstractQueuedSynchronizer
             // 保存尾结点
             Node t = lastWaiter;
             // If lastWaiter is cancelled, clean out.
-            // 尾结点 不为空，并且尾结点的状态不为CONDITION
+            // 尾结点 不为空，并且尾结点的状态不为 CONDITION
             if (t != null && t.waitStatus != Node.CONDITION) {
                 // 清除状态为CONDITION的结点
                 unlinkCancelledWaiters();
@@ -2013,14 +2041,14 @@ public abstract class AbstractQueuedSynchronizer
          */
         private void doSignal(Node first) {
             do {
-                // 该节点的nextWaiter为空
+                // 该节点的 nextWaiter 为空
                 if ( (firstWaiter = first.nextWaiter) == null)
                     // 设置尾结点为空
                     lastWaiter = null;
-                // 设置first结点的nextWaiter域
+                // 设置 first 结点的 nextWaiter 域
                 first.nextWaiter = null;
             } while (!transferForSignal(first) &&
-                    // 将结点从condition队列转移到sync队列失败并且condition队列中的头结点不为空，一直循环
+                    // 将结点从 condition 队列转移到 sync 队列失败并且 condition 队列中的头结点不为空，一直循环
                      (first = firstWaiter) != null);
         }
 
@@ -2060,15 +2088,14 @@ public abstract class AbstractQueuedSynchronizer
          */
         // 从condition队列中清除状态为CANCEL的结点
         /**
-         从firstWaiter开始，过滤掉所有状态不为condition的节点
+         从 firstWaiter开始，过滤掉所有状态不为condition的节点
          基本上按trail-t-next逐个节点向后移动，t从firstWaiter开始
-         当时看的时候，拿纸画了一遍才清楚
          */
         private void unlinkCancelledWaiters() {
-            // 保存condition队列头结点
+            // 保存 condition 队列头结点
             Node t = firstWaiter;
             Node trail = null;
-            while (t != null) {// t不为空
+            while (t != null) {// t 不为空
                 // 下一个结点
                 Node next = t.nextWaiter;
                 if (t.waitStatus != Node.CONDITION) {    // t结点的状态不为 CONDTION 状态
@@ -2084,7 +2111,7 @@ public abstract class AbstractQueuedSynchronizer
                         // 设置condition队列的尾结点
                         lastWaiter = trail;
                 }
-                else// t结点的状态为CONDTION状态
+                else// t 结点的状态为CONDTION状态
                     trail = t; // 设置trail结点
                 // 设置t结点
                 t = next;
@@ -2224,18 +2251,21 @@ public abstract class AbstractQueuedSynchronizer
          * <li> If interrupted while blocked in step 4, throw InterruptedException.
          * </ol>
          */
-        // 等待，当前线程在接到信号或被中断之前一直处于等待状态
-        // 能调用await的方法的线程肯定获得锁
+        // 等待，当前线程在收到信号或被中断之前一直处于等待状态
+        // 能调用 await 的方法的线程肯定获得了锁
+        // 调用 Condition 的 await() 方法（或者以 await 开头的方法），会使当前线程进入等待队列并释
+        // 放锁，同时线程状态变为等待状态。
+        // 当从 await() 方法返回时，当前线程一定获取了Condition 相关联的锁。
         public final void await() throws InterruptedException {
             if (Thread.interrupted())
                 // 当前线程被中断，抛出异常
                 throw new InterruptedException();
-            // 在wait队列上添加一个结点
+            // 在 wait 队列上添加一个结点
             Node node = addConditionWaiter();
-            // 释放AQS同步等待队列中的节点
+            // 释放同步队列中的节点
             int savedState = fullyRelease(node);
             int interruptMode = 0;
-            // 看节点是否还在AQS的同步等待队列,因为signal/signalAll调用的话会把节点加入到AQS的等待队列，如果没在那就说明需要park
+            // 看节点是否还在 AQS 的同步等待队列,因为 signal/signalAll 调用的话会把节点加入到AQS的等待队列，如果没在那就说明需要park
             while (!isOnSyncQueue(node)) {
                 // 阻塞当前线程
                 // 不在的话那就应该在条件队列了，那么park吧

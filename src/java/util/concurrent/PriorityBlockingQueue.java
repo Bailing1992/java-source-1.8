@@ -105,6 +105,15 @@ import java.util.function.Consumer;
  * @author Doug Lea
  * @param <E> the type of elements held in this collection
  */
+
+/**
+ *
+ * PriorityBlockingQueue 是一个支持优先级的无界阻塞队列。默认情况下元素采取自然顺序
+ * 升序排列。也可以自定义类实现compareTo()方法来指定元素排序规则，或者初始化
+ * PriorityBlockingQueue时，指定构造参数Comparator来对元素进行排序。需要注意的是不能保证
+ * 同优先级元素的顺序。
+ *
+ * */
 @SuppressWarnings("unchecked")
 public class PriorityBlockingQueue<E> extends AbstractQueue<E>
     implements BlockingQueue<E>, java.io.Serializable {

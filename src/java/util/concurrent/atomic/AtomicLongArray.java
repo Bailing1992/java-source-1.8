@@ -44,6 +44,7 @@ import sun.misc.Unsafe;
  * for description of the properties of atomic variables.
  * @since 1.5
  * @author Doug Lea
+ * 原子更新长整型数组里的元素。
  */
 public class AtomicLongArray implements java.io.Serializable {
     private static final long serialVersionUID = -2308431214976778248L;

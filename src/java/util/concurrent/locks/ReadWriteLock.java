@@ -116,6 +116,8 @@ package java.util.concurrent.locks;
  * @since 1.5
  * @author Doug Lea
  */
+
+// ReadWriteLock仅定义了获取读锁和写锁的两个方法，即readLock()方法和writeLock()方法
 public interface ReadWriteLock {
     /**
      * Returns the lock used for reading.

@@ -190,7 +190,7 @@ public interface Lock {
      * <p>Acquires the lock if it is available and returns immediately.
      *
      * <p>If the lock is not available then the current thread becomes
-     * disabled for thread scheduling purposes and lies dormant until
+     * disabled for thread scheduling purposes and lies dormant(休眠) until
      * one of two things happens:
      *
      * <ul>
@@ -228,7 +228,9 @@ public interface Lock {
      * @throws InterruptedException if the current thread is
      *         interrupted while acquiring the lock (and interruption
      *         of lock acquisition is supported)
+     *         可响应中断式锁
      */
+
     void lockInterruptibly() throws InterruptedException;
 
     /**

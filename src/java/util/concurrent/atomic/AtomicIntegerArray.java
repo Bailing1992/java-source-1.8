@@ -45,6 +45,7 @@ import sun.misc.Unsafe;
  * variables.
  * @since 1.5
  * @author Doug Lea
+ * 原子更新整型数组里的元素。
  */
 public class AtomicIntegerArray implements java.io.Serializable {
     private static final long serialVersionUID = 2862133569453604235L;
@@ -88,6 +89,10 @@ public class AtomicIntegerArray implements java.io.Serializable {
      *
      * @param array the array to copy elements from
      * @throws NullPointerException if array is null
+     *
+     *
+     * 数组 value 通过构造方法传递进去，然后AtomicIntegerArray会将当前数组
+     * 复制一份，所以当 AtomicIntegerArray 对内部的数组元素进行修改时，不会影响传入的数组。
      */
     public AtomicIntegerArray(int[] array) {
         // Visibility guaranteed by final field guarantees
@@ -145,6 +150,7 @@ public class AtomicIntegerArray implements java.io.Serializable {
      * @param i the index
      * @param newValue the new value
      * @return the previous value
+     * 以原子方式将输入值与数组中索引i的元素相加。
      */
     public final int getAndSet(int i, int newValue) {
         return unsafe.getAndSetInt(array, checkedByteOffset(i), newValue);
@@ -159,6 +165,7 @@ public class AtomicIntegerArray implements java.io.Serializable {
      * @param update the new value
      * @return {@code true} if successful. False return indicates that
      * the actual value was not equal to the expected value.
+     * 如果当前值等于预期值，则以原子方式将数组位置i的元素设置成update值。
      */
     public final boolean compareAndSet(int i, int expect, int update) {
         return compareAndSetRaw(checkedByteOffset(i), expect, update);

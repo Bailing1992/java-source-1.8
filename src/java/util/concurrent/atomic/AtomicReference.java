@@ -45,6 +45,11 @@ import sun.misc.Unsafe;
  * @since 1.5
  * @author Doug Lea
  * @param <V> The type of object referred to by this reference
+ *
+ * 原子更新基本类型的 AtomicInteger，只能更新一个变量，如果要原子更新多个变量，就需
+ * 要使用这个原子更新引用类型提供的类
+ *
+ *           原子更新引用类型
  */
 public class AtomicReference<V> implements java.io.Serializable {
     private static final long serialVersionUID = -1848883965231344442L;

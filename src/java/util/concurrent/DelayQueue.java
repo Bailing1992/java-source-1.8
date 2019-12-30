@@ -67,6 +67,12 @@ import java.util.*;
  * @author Doug Lea
  * @param <E> the type of elements held in this collection
  */
+
+/**
+ * DelayQueue是一个支持延时获取元素的无界阻塞队列。队列使用PriorityQueue来实现。队
+ * 列中的元素必须实现Delayed接口，在创建元素时可以指定多久才能从队列中获取当前元素。
+ * 只有在延迟期满时才能从队列中提取元素。
+ * */
 public class DelayQueue<E extends Delayed> extends AbstractQueue<E>
     implements BlockingQueue<E> {
 

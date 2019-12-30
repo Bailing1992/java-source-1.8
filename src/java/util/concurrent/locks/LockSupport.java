@@ -169,6 +169,14 @@ public class LockSupport {
      *        thread parking
      * @since 1.6
      */
+    /**
+     *
+     * 调用 setBlocker 先保存一下将要阻塞的线程，然后调用 unsafe.park 阻塞当前线程。
+     *
+     * park在不同的操作系统中使用不同的方式实现，在
+     * Linux下使用的是系统方法pthread_cond_wait实现。实现代码在JVM源码路径
+     * src/os/linux/vm/os_linux.cpp里的os::PlatformEvent::park方法
+     * */
     public static void park(Object blocker) {
         Thread t = Thread.currentThread();
         setBlocker(t, blocker);

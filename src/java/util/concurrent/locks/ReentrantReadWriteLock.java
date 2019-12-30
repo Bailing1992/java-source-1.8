@@ -212,6 +212,11 @@ import java.util.Collection;
  * @since 1.5
  * @author Doug Lea
  */
+/**
+ * 读写锁在同一时刻可以允许多个读线程访问，但是在写线程访问时，所有的读
+ * 线程和其他写线程均被阻塞。读写锁维护了一对锁，一个读锁和一个写锁，通过分离读锁和写
+ * 锁，使得并发性相比一般的排他锁有了很大提升。
+ * */
 public class ReentrantReadWriteLock
         implements ReadWriteLock, java.io.Serializable {
     private static final long serialVersionUID = -6992448646407690164L;
@@ -1255,6 +1260,9 @@ public class ReentrantReadWriteLock
      * synchronization control.
      * @return the number of read locks held
      */
+    /**
+     * 返回当前duz
+     * */
     public int getReadLockCount() {
         return sync.getReadLockCount();
     }

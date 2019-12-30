@@ -46,6 +46,11 @@ package java.util.concurrent.atomic;
  * @since 1.5
  * @author Doug Lea
  * @param <V> The type of object referred to by this reference
+ *
+ *           原子更新带有版本号的引用类型
+ *
+ *           该类将整数值与引用关联起来，可用于原子的更新数据和数据的版本号，可以解决使用CAS进行原子更新时可能出现的
+ * ABA问题。
  */
 public class AtomicStampedReference<V> {
 

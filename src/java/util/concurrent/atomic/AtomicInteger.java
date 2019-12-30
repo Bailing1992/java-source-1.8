@@ -105,6 +105,7 @@ public class AtomicInteger extends Number implements java.io.Serializable {
      *
      * @param newValue the new value
      * @since 1.6
+     * 最终会设置成newValue，使用lazySet设置值后，可能导致其他线程在之后的一小段时间内还是可以读到旧的值。
      */
     public final void lazySet(int newValue) {
         unsafe.putOrderedInt(this, valueOffset, newValue);
@@ -128,6 +129,7 @@ public class AtomicInteger extends Number implements java.io.Serializable {
      * @param update the new value
      * @return {@code true} if successful. False return indicates that
      * the actual value was not equal to the expected value.
+     *  如果输入的数值等于预期值，则以原子方式将该值设置为输入的值。
      */
     public final boolean compareAndSet(int expect, int update) {
         return unsafe.compareAndSwapInt(this, valueOffset, expect, update);
@@ -153,6 +155,7 @@ public class AtomicInteger extends Number implements java.io.Serializable {
      * Atomically increments by one the current value.
      *
      * @return the previous value
+     * 以原子方式将当前值加1，注意，这里返回的是自增前的值。
      */
     public final int getAndIncrement() {
         return unsafe.getAndAddInt(this, valueOffset, 1);
@@ -171,7 +174,7 @@ public class AtomicInteger extends Number implements java.io.Serializable {
      * Atomically adds the given value to the current value.
      *
      * @param delta the value to add
-     * @return the previous value
+     * @return the previous value 返回之前的值
      */
     public final int getAndAdd(int delta) {
         return unsafe.getAndAddInt(this, valueOffset, delta);
@@ -199,7 +202,10 @@ public class AtomicInteger extends Number implements java.io.Serializable {
      * Atomically adds the given value to the current value.
      *
      * @param delta the value to add
-     * @return the updated value
+     * @return the updated value 返回更新之后的值
+     *
+     * 以 原子方式 将输入的数值与实例中的值（AtomicInteger里的 value）相加，并返回结果。
+     *
      */
     public final int addAndGet(int delta) {
         return unsafe.getAndAddInt(this, valueOffset, delta) + delta;

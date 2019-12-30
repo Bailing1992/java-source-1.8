@@ -102,6 +102,14 @@ import java.util.function.Consumer;
  * @author Doug Lea
  * @param <E> the type of elements held in this collection
  */
+
+/**
+ * ConcurrentLinkedQueue 是一个 基于 链接节点的无界线程安全队列，它采用先进先出的规
+ * 则 对节点进行排序，当我们添加一个元素的时候，它会添加到队列的尾部；当我们获取一个元
+ * 素时，它会返回队列头部的元素。它采用了“wait-free”算法（即CAS算法）来实现，该算法在
+ * Michael&Scott算法上进行了一些修改。
+ * */
+
 public class ConcurrentLinkedQueue<E> extends AbstractQueue<E>
         implements Queue<E>, java.io.Serializable {
     private static final long serialVersionUID = 196745693267521676L;
@@ -233,6 +241,13 @@ public class ConcurrentLinkedQueue<E> extends AbstractQueue<E>
      * - it is permitted for tail to lag behind head, that is, for tail
      *   to not be reachable from head!
      */
+    /**
+     *
+     * ConcurrentLinkedQueue 由 head 节点 和 tail 节点 组成，每个节点（Node）由节点元素（item）和
+     * 指向下一个节点（next）的引用 组成，节点与节点之间 就是通过这个next关联起来，从而组成一张链表结构的队列。
+     *
+     * 初始情况下 head 节点存储的元素为空，tail 节点等于 head 节点。
+     * */
     private transient volatile Node<E> head;
 
     /**
@@ -292,6 +307,8 @@ public class ConcurrentLinkedQueue<E> extends AbstractQueue<E>
      *
      * @return {@code true} (as specified by {@link Collection#add})
      * @throws NullPointerException if the specified element is null
+     *
+     * 入队列就是将入队节点添加到队列的尾部
      */
     public boolean add(E e) {
         return offer(e);

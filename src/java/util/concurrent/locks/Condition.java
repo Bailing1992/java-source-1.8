@@ -176,6 +176,11 @@ import java.util.Date;
  * @since 1.5
  * @author Doug Lea
  */
+/**
+ * Condition定义了等待/通知两种类型的方法，当前线程调用这些方法时，需要提前获取到
+ * Condition对象关联的锁。Condition对象是由Lock对象（调用Lock对象的newCondition()方法）创
+ * 建出来的，换句话说，Condition是依赖Lock对象的。
+ * */
 public interface Condition {
 
     /**

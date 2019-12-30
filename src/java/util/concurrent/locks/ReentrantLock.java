@@ -101,6 +101,7 @@ import java.util.Collection;
  * {@link Error} throws from locking methods.
  *
  * @since 1.5
+ *
  * @author Doug Lea
  */
 public class ReentrantLock implements Lock, java.io.Serializable {
@@ -125,6 +126,10 @@ public class ReentrantLock implements Lock, java.io.Serializable {
         /**
          * Performs non-fair tryLock.  tryAcquire is implemented in
          * subclasses, but both need nonfair try for trylock method.
+         *
+         * 该方法增加了再次获取同步状态的处理逻辑：通过判断当前线程是否为获取锁的线程来
+         * 决定获取操作是否成功，如果是获取锁的线程再次请求，则将同步状态值进行增加并返回
+         * true，表示获取同步状态成功。
          */
         final boolean nonfairTryAcquire(int acquires) {
             final Thread current = Thread.currentThread();
@@ -228,13 +233,18 @@ public class ReentrantLock implements Lock, java.io.Serializable {
         /**
          * Fair version of tryAcquire.  Don't grant access unless
          * recursive call or no waiters or is first.
+         *
+         *    该方法与 nonfairTryAcquire(int acquires)比较，唯一不同是判断条件多了
+         * hasQueuedPredecessors()，即同步队列中是否有其他等待线程，如果该
+         * 方法返回true，则表示有线程比当前线程更早地请求获取锁，因此需要等待前驱线程获取并释
+         * 放锁之后才能继续获取锁。
          */
         protected final boolean tryAcquire(int acquires) {
             final Thread current = Thread.currentThread(); // 获取当前线程
             int c = getState();// 获取父类 aqs 中的标志位
 
             if (c == 0) {
-                if (!hasQueuedPredecessors() &&  // 如果队列中没有其他线程  说明没有线程正在占有锁！
+                if (!hasQueuedPredecessors() &&
                         compareAndSetState(0, acquires)) {  // 修改一下状态位
                     setExclusiveOwnerThread(current); // 如果通过 CAS 操作将状态为更新成功则代表当前线程获取锁，则设置线程
                     return true;

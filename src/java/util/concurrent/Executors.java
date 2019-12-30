@@ -72,7 +72,7 @@ public class Executors {
 
     /**
      * Creates a thread pool that reuses a fixed number of threads
-     * operating off a shared unbounded queue.  At any point, at most
+     * operating off a shared unbounded queue .  At any point, at most
      * {@code nThreads} threads will be active processing tasks.
      * If additional tasks are submitted when all threads are active,
      * they will wait in the queue until a thread is available.

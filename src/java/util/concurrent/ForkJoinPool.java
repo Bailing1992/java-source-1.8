@@ -166,6 +166,15 @@ import java.security.Permissions;
  * @since 1.7
  * @author Doug Lea
  */
+
+/**
+ *
+ * ForkJoinTask需要通过ForkJoinPool来执行
+ *
+ *
+ * ForkJoinPool 由 ForkJoinTask 数组和 ForkJoinWorkerThread 数组组成，ForkJoinTask 数组负责
+ * 将存放程序提交给 ForkJoinPool 的任务，而 ForkJoinWorkerThread 数组负责执行这些任务。
+ * */
 @sun.misc.Contended
 public class ForkJoinPool extends AbstractExecutorService {
 
@@ -855,6 +864,9 @@ public class ForkJoinPool extends AbstractExecutorService {
          *
          * @param task the task. Caller must ensure non-null.
          * @throws RejectedExecutionException if array cannot be resized
+         *
+         * pushTask 方法把当前任务存放在 ForkJoinTask 数组队列里。然后再调用ForkJoinPool的
+         * signalWork() 方法唤醒或创建一个工作线程来执行任务
          */
         final void push(ForkJoinTask<?> task) {
             ForkJoinTask<?>[] a; ForkJoinPool p;

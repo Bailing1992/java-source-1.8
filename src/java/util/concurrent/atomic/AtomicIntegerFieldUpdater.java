@@ -63,6 +63,8 @@ import sun.reflect.Reflection;
  * @since 1.5
  * @author Doug Lea
  * @param <T> The type of the object holding the updatable field
+ *
+ *           原子更新整型的字段的更新器
  */
 public abstract class AtomicIntegerFieldUpdater<T> {
     /**

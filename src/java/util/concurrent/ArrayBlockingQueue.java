@@ -79,6 +79,18 @@ import java.util.Spliterator;
  * @author Doug Lea
  * @param <E> the type of elements held in this collection
  */
+
+/**
+ *
+ *    ArrayBlockingQueue 是一个用数组实现的有界阻塞队列。此队列按照先进先出（FIFO）的原
+ * 则对元素进行排序。
+ *    默认情况下不保证线程公平的访问队列，所谓公平访问队列是指阻塞的线程，可以按照
+ * 阻塞的先后顺序访问队列，即先阻塞的线程先访问队列。非公平性是对先等待的线程是非公平
+ * 的，当队列可用时，阻塞的线程都可以争夺访问队列的资格，有可能先阻塞的线程最后才访问
+ * 队列。为了保证公平性，通常会降低吞吐量。我们可以使用以下代码创建一个公平的阻塞队
+ * 列。
+ *
+ * */
 public class ArrayBlockingQueue<E> extends AbstractQueue<E>
         implements BlockingQueue<E>, java.io.Serializable {
 
@@ -90,16 +102,16 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
      */
     private static final long serialVersionUID = -817911632652898426L;
 
-    /** The queued items */
+    /** The queued items 数组 items 用来存放队列元素 */
     final Object[] items;
 
-    /** items index for next take, poll, peek or remove */
+    /** items index for next take, poll, peek or remove. takeIndex 是出队下标 */
     int takeIndex;
 
-    /** items index for next put, offer, or add */
+    /** items index for next put, offer, or add. putIndex 标示入队元素下标 */
     int putIndex;
 
-    /** Number of elements in the queue */
+    /** Number of elements in the queue. count统计队列元素个数 */
     int count;
 
     /*
@@ -107,7 +119,9 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
      * found in any textbook.
      */
 
-    /** Main lock guarding all access */
+    /** Main lock guarding all access
+     * 独占锁 lock 对出队入队操作加锁，这导致同时只有一个线程可以访问入队出队，
+     * 另外notEmpty，notFull条件变量用来进行出入队的同步。 */
     final ReentrantLock lock;
 
     /** Condition for waiting takes */
@@ -154,14 +168,25 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
      * Inserts element at current put position, advances, and signals.
      * Call only when holding lock.
      */
+    /**
+     * 元素入队:
+     *
+     * 由于在操作共享变量前加了锁，
+     * 所以不存在内存不可见问题，
+     * 加过锁后获取的共享变量都是从主内存获取的，
+     * 而不是在CPU缓存或者寄存器里面的值，
+     * 释放锁后修改的共享变量值会刷新会主内存中。
+     * */
     private void enqueue(E x) {
         // assert lock.getHoldCount() == 1;
         // assert items[putIndex] == null;
         final Object[] items = this.items;
         items[putIndex] = x;
-        if (++putIndex == items.length)
+        // 队列是使用循环数组实现
+        if (++ putIndex == items.length)
             putIndex = 0;
-        count++;
+        count ++;
+        // 激活调用notEmpty.await()阻塞后放入notEmpty条件队列中的线程。
         notEmpty.signal();
     }
 
@@ -248,11 +273,15 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
      *        on insertion or removal, are processed in FIFO order;
      *        if {@code false} the access order is unspecified.
      * @throws IllegalArgumentException if {@code capacity < 1}
+     *
+     * 构造函数必须传入队列大小参数，所以为有界队列，默认是Lock为非公平锁。
      */
+
     public ArrayBlockingQueue(int capacity, boolean fair) {
         if (capacity <= 0)
             throw new IllegalArgumentException();
         this.items = new Object[capacity];
+        // 访问者的公平性是使用可重入锁实现
         lock = new ReentrantLock(fair);
         notEmpty = lock.newCondition();
         notFull =  lock.newCondition();
@@ -320,15 +349,20 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
      * which can fail to insert an element only by throwing an exception.
      *
      * @throws NullPointerException if the specified element is null
+     * 在队尾插入元素，如果队列满则返回false，否者入队返回true
      */
     public boolean offer(E e) {
+        // e 为 null，则抛出 NullPointerException 异常
         checkNotNull(e);
+        // 获取独占锁
         final ReentrantLock lock = this.lock;
         lock.lock();
         try {
+            // 如果队列满则返回false
             if (count == items.length)
                 return false;
             else {
+                // 如果队列满则返回false
                 enqueue(e);
                 return true;
             }
@@ -344,12 +378,29 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
      * @throws InterruptedException {@inheritDoc}
      * @throws NullPointerException {@inheritDoc}
      */
+
+    /**
+     *
+     * 在队列尾部添加元素，如果队列满则等待，队列有空位置插入后返回.
+     * 当线程被阻塞队列阻塞时，线程会进入WAITING（parking）状态.
+     *
+     * park 这个方法会阻塞当前线程，只有以下4种情况中的一种发生时，该方法才会返回:
+     * 1. 与park对应的un-park执行或已经执行时。“已经执行”是指un-park先执行，然后再执行park
+     * 的情况。
+     * 2. 线程被中断时。
+     * 3. 等待完time参数指定的毫秒数时。
+     * 4. 异常现象发生时，这个异常现象没有任何原因。
+     *
+     * */
     public void put(E e) throws InterruptedException {
         checkNotNull(e);
         final ReentrantLock lock = this.lock;
+        // 获取可被中断锁
         lock.lockInterruptibly();
         try {
+            // 队列满则把当前线程放入 notFull condition  等待队列
             while (count == items.length)
+                // 当往队列里插入一个元素时，如果队列不可用，那么阻塞生产者主要通过 LockSupport.park（this）来实现。
                 notFull.await();
             enqueue(e);
         } finally {
