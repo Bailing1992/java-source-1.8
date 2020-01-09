@@ -84,6 +84,11 @@ public class Executors {
      * @param nThreads the number of threads in the pool
      * @return the newly created thread pool
      * @throws IllegalArgumentException if {@code nThreads <= 0}
+     *
+     * 创建使用固定线程数的 FixedThreadPool,可重用固定线程数的线程池
+     *
+     * FixedThreadPool 适用于为了满足资源管理的需求，而需要限制当前线程数量的应用场
+     * 景，它适用于负载比较重的服务器。
      */
     public static ExecutorService newFixedThreadPool(int nThreads) {
         return new ThreadPoolExecutor(nThreads, nThreads,
@@ -166,6 +171,11 @@ public class Executors {
      * guaranteed not to be reconfigurable to use additional threads.
      *
      * @return the newly created single-threaded Executor
+     *
+     * 创建使用单个线程的SingleThreadExecutor
+     *
+     * SingleThreadExecutor适用于需要保证顺序地执行各个任务；并且在任意时间点，不会有多
+     * 个线程应用场景。
      */
     public static ExecutorService newSingleThreadExecutor() {
         return new FinalizableDelegatedExecutorService
@@ -212,6 +222,33 @@ public class Executors {
      * may be created using {@link ThreadPoolExecutor} constructors.
      *
      * @return the newly created thread pool
+     *
+     * 创建一个会根据需要创建新线程的CachedThreadPool
+     *
+     *    CachedThreadPool 是大小无界的线程池，适用于执行很多的短期异步任务的小程序，或者
+     * 是负载较轻的服务器。
+     *
+     *
+     *    CachedThreadPool 的 corePoolSize 被设置为 0，即 corePool 为空；maximumPoolSize 被设置为
+     * Integer.MAX_VALUE，即 maximumPool 是无界的。这里把keepAliveTime设置为60L，意味着
+     * CachedThreadPool中的空闲线程等待新任务的最长时间为60秒，空闲线程超过60秒后将会被
+     * 终止。
+     *
+     *    CachedThreadPool 使用没有容量的 SynchronousQueue 作为线程池的工作队列，但
+     * CachedThreadPool 的 maximumPool 是无界的。这意味着，如果主线程提交任务的速度高于
+     * maximumPool 中线程处理任务的速度时，CachedThreadPool 会不断创建新线程。极端情况下，
+     * CachedThreadPool 会因为创建过多线程而耗尽CPU和内存资源。
+     *
+     *
+     * 首先执行 SynchronousQueue.offer（Runnable task）。如果当前 maximumPool 中有空闲线程
+     * 正在执行SynchronousQueue.poll（keepAliveTime，TimeUnit.NANOSECONDS），那么主线程执行
+     * offer操作与空闲线程执行的poll操作配对成功，主线程把任务交给空闲线程执行，execute()方
+     * 法执行完成；否则执行下面的步骤2）。
+     *
+     * 当初始maximumPool为空，或者maximumPool中当前没有空闲线程时，将没有线程执行
+     * SynchronousQueue.poll（keepAliveTime，TimeUnit.NANOSECONDS）。这种情况下，步骤1）将失
+     * 败。此时CachedThreadPool会创建一个新线程执行任务，execute()方法执行完成
+     *
      */
     public static ExecutorService newCachedThreadPool() {
         return new ThreadPoolExecutor(0, Integer.MAX_VALUE,
@@ -405,6 +442,10 @@ public class Executors {
      * @return a callable object
      * @throws NullPointerException if task null
      */
+    /**
+     * 把一个Runnable对象封装为一个Callable对象（Executors.callable（Runnable task）或
+     * Executors.callable（Runnable task，Object result））
+     * */
     public static <T> Callable<T> callable(Runnable task, T result) {
         if (task == null)
             throw new NullPointerException();

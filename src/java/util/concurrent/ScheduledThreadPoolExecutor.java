@@ -1,13 +1,12 @@
-/*
+/**
  * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  *
  *
  *
  *
- *可以看出由于ScheduledThreadPoolExecutor继承了ThreadPoolExecutor，它的构造方法实际上是调用了ThreadPoolExecutor，
- * 对ThreadPoolExecutor的介绍可以可以看这篇文章，理解ThreadPoolExecutor构造方法的几个参数的意义后，理解这就很容易了。
- * 可以看出，ScheduledThreadPoolExecutor的核心线程池的线程个数为指定的corePoolSize，当核心线程池的线程个数达到corePoolSize后，
- * 就会将任务提交给有界阻塞队列DelayedWorkQueue，对DelayedWorkQueue在下面进行详细介绍，
+ * 由于ScheduledThreadPoolExecutor继承了ThreadPoolExecutor，它的构造方法实际上是调用了ThreadPoolExecutor，
+ * ScheduledThreadPoolExecutor的核心线程池的线程个数为指定的corePoolSize，当核心线程池的线程个数达到corePoolSize后，
+ * 就会将任务提交给有界阻塞队列DelayedWorkQueue，
  * 线程池允许最大的线程个数为Integer.MAX_VALUE，也就是说理论上这是一个大小无界的线程池。
  *
  *
@@ -101,6 +100,21 @@ import java.util.*;
  * @since 1.5
  * @author Doug Lea
  */
+
+/**
+ *
+ * ScheduledThreadPoolExecutor 是一个实现类，可以在给定的延迟后运行命令，或者定期执
+ * 行命令。ScheduledThreadPoolExecutor 比 Timer 更灵活，功能更强大。
+ *
+ * ScheduledThreadPoolExecutor 继承自 ThreadPoolExecutor。它主要用来在给定的延迟之后运
+ * 行任务，或者定期执行任务。ScheduledThreadPoolExecutor 的功能与 Timer 类似，但
+ * ScheduledThreadPoolExecutor 功能更强大、更灵活。Timer对应的是单个后台线程，而
+ * ScheduledThreadPoolExecutor可以在构造函数中指定多个对应的后台线程数。
+ *
+ * ScheduledThreadPoolExecutor会把待调度的任务（ScheduledFutureTask）
+ * 放到一个DelayQueue中。
+ *
+ * */
 public class ScheduledThreadPoolExecutor
         extends ThreadPoolExecutor
         implements ScheduledExecutorService {
@@ -163,10 +177,14 @@ public class ScheduledThreadPoolExecutor
     private class ScheduledFutureTask<V>
             extends FutureTask<V> implements RunnableScheduledFuture<V> {
 
-        /** Sequence number to break ties FIFO */
+        /** Sequence number to break ties FIFO
+         * long 型成员变量 sequenceNumber，表示这个任务被添加到 ScheduledThreadPoolExecutor 中的序号。
+         * */
         private final long sequenceNumber;
 
-        /** The time the task is enabled to execute in nanoTime units */
+        /** The time the task is enabled to execute in nanoTime units
+         * long 型成员变量 time，表示这个任务将要被执行的具体时间
+         * */
         private long time;
 
         /**
@@ -174,6 +192,7 @@ public class ScheduledThreadPoolExecutor
          * value indicates fixed-rate execution.  A negative value
          * indicates fixed-delay execution.  A value of 0 indicates a
          * non-repeating task.
+         * long 型成员变量 period，表示任务执行的间隔周期。
          */
         private final long period;
 
@@ -788,6 +807,10 @@ public class ScheduledThreadPoolExecutor
      * Specialized delay queue. To mesh with TPE declarations, this
      * class must be declared as a BlockingQueue<Runnable> even though
      * it can only hold RunnableScheduledFutures.
+     *
+     * DelayQueue 封装了一个 PriorityQueue，这个 PriorityQueue 会对队列中的 Scheduled-FutureTask
+     * 进行排序。排序时，time小的排在前面（时间早的任务将被先执行）。如果两个 ScheduledFutureTask 的 time 相同，
+     * 就比较 sequenceNumber，sequenceNumber 小的排在前面（也就是说，如果两个任务的执行时间相同，那么先提交的任务将被先执行）。
      */
     static class DelayedWorkQueue extends AbstractQueue<Runnable>
         implements BlockingQueue<Runnable> {
@@ -1056,16 +1079,16 @@ public class ScheduledThreadPoolExecutor
 
         public RunnableScheduledFuture<?> take() throws InterruptedException {
             final ReentrantLock lock = this.lock;
-            lock.lockInterruptibly();
+            lock.lockInterruptibly(); // 获取Lock。
             try {
                 for (;;) {
                     RunnableScheduledFuture<?> first = queue[0];
                     if (first == null)
-                        available.await();
+                        available.await(); // 如果PriorityQueue为空，当前线程到Condition中等待
                     else {
                         long delay = first.getDelay(NANOSECONDS);
                         if (delay <= 0)
-                            return finishPoll(first);
+                            return finishPoll(first); //如果PriorityQueue的头元素的time时间比当前时间大，到Condition中等待到time时间
                         first = null; // don't retain ref while waiting
                         if (leader != null)
                             available.await();

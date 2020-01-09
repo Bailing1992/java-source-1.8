@@ -1238,9 +1238,14 @@ class Thread implements Runnable {
      *          if any thread has interrupted the current thread. The
      *          <i>interrupted status</i> of the current thread is
      *          cleared when this exception is thrown.
+     * join 用于让当前执行线程等待 join 线程执行结束。其实现原理是不停检查join线程是否存
+     * 活，如果 join 线程存活则让当前线程永远等待。其中，wait（0）表示永远等待下去
+     * 对于 wait(long millis) 方法，当 millis 为 0 时，表示 无限等待，直到被 notify() 或 notifyAll() 唤醒。
+     *
+     * 直到 join 线程中止后，线程的 this.notifyAll() 方法会被调用，调用 notifyAll() 方法是在JVM里
+     * 实现的，所以在JDK里看不到
      */
-    public final synchronized void join(long millis)
-    throws InterruptedException {
+    public final synchronized void join(long millis) throws InterruptedException {
         long base = System.currentTimeMillis();
         long now = 0;
 
@@ -1322,6 +1327,8 @@ class Thread implements Runnable {
      *          if any thread has interrupted the current thread. The
      *          <i>interrupted status</i> of the current thread is
      *          cleared when this exception is thrown.
+     * join用于让当前执行线程等待join线程执行结束。其实现原理是不停检查join线程是否存
+     * 活，如果join线程存活则让当前线程永远等待。其中，wait（0）表示永远等待下去
      */
     public final void join() throws InterruptedException {
         join(0);

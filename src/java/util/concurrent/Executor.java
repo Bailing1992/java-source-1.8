@@ -124,7 +124,26 @@ package java.util.concurrent;
  *
  * @since 1.5
  * @author Doug Lea
- */
+ *
+ *   Java线程既是工作单元，也是执行机制。从JDK 5开始，把工作单元与执行机制分离开
+ * 来。工作单元包括 Runnable 和 Callable，而执行机制由 Executor 框架提供。
+ *
+ * 在 HotSpot VM 的线程模型中，Java线程（java.lang.Thread）被一对一映射为本地操作系统线程。
+ * Java线程启动时会创建一个本地操作系统线程；当该Java线程终止时，这个操作系统线程也会被回收。
+ * 操作系统会调度所有线程并将它们分配给可用的CPU。
+ *
+ * 在上层，Java多线程程序通常把应用分解为若干个任务，然后使用用户级的调度器
+ * （Executor框架）将这些任务映射为固定数量的线程；
+ * 在底层，操作系统内核将这些线程映射到硬件处理器上。
+ *
+ * */
+
+/**
+ *
+ * 任务执行机制的核心接口Executor
+ * Executor 是一个接口，它是 Executor 框架的基础，它将任务的提交与任务的执行分离开来。
+ *
+ * */
 public interface Executor {
 
     /**

@@ -82,16 +82,16 @@ import java.util.Spliterators;
  * @param <E> the type of elements held in this collection
  */
 /**
- * SynchronousQueue是一个不存储元素的阻塞队列。每一个put操作必须等待一个take操作，
+ * SynchronousQueue 是一个不存储元素的阻塞队列。每一个 put 操作必须等待一个 take 操作，
  * 否则不能继续添加元素。
  *
  * 它支持公平访问队列。默认情况下线程采用非公平性策略访问队列。使用以下构造方法
- * 可以创建公平性访问的SynchronousQueue，如果设置为true，则等待的线程会采用先进先出的
+ * 可以创建公平性访问的 SynchronousQueue，如果设置为 true ，则等待的线程会采用先进先出的
  * 顺序访问队列。
  *
- * SynchronousQueue可以看成是一个传球手，负责把生产者线程处理的数据直接传递给消费
- * 者线程。队列本身并不存储任何元素，非常适合传递性场景。SynchronousQueue的吞吐量高于
- * LinkedBlockingQueue和ArrayBlockingQueue。
+ * SynchronousQueue 可以看成是一个传球手，负责把生产者线程处理的数据直接传递给消费
+ * 者线程。队列本身并不存储任何元素，非常适合传递性场景。SynchronousQueue 的吞吐量高于
+ * LinkedBlockingQueue 和ArrayBlockingQueue。
  * */
 public class SynchronousQueue<E> extends AbstractQueue<E>
     implements BlockingQueue<E>, java.io.Serializable {

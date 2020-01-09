@@ -152,6 +152,10 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
  *
  * @since 1.5
  * @author Doug Lea
+ * 提供了一种并发流程控制的手段 : 等待多线程完成
+ * CountDownLatch 允许一个或多个线程等待其他线程完成操作。
+ *
+ * CountDownLatch 的计数器只能使用一次
  */
 public class CountDownLatch {
     /**
@@ -194,6 +198,14 @@ public class CountDownLatch {
      * @param count the number of times {@link #countDown} must be invoked
      *        before threads can pass through {@link #await}
      * @throws IllegalArgumentException if {@code count} is negative
+     *
+     * CountDownLatch 构造函数接收一个 int 类型的参数作为计数器，如果想等待 N 个点完
+     * 成，这里就传入N.
+     *
+     * 当我们调用 CountDownLatch 的 countDown 方法时，N 就会减1，CountDownLatch 的 await 方法
+     * 会阻塞当前线程，直到 N 变成零。由于 countDown 方法可以用在任何地方，所以这里说的 N 个
+     * 点，可以是N个线程，也可以是1个线程里的N个执行步骤。用在多个线程时，只需要把这个
+     * CountDownLatch的引用传递到线程里即可。
      */
     public CountDownLatch(int count) {
         if (count < 0) throw new IllegalArgumentException("count < 0");
@@ -271,6 +283,9 @@ public class CountDownLatch {
      *         if the waiting time elapsed before the count reached zero
      * @throws InterruptedException if the current thread is interrupted
      *         while waiting
+     *
+     * await（long time，TimeUnit unit），这个方法等待特定时
+     * 间后，就会不再阻塞当前线程。join也有类似的方法。
      */
     public boolean await(long timeout, TimeUnit unit)
         throws InterruptedException {

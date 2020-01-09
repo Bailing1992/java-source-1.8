@@ -252,6 +252,10 @@ public interface ExecutorService extends Executor {
      * @throws RejectedExecutionException if the task cannot be
      *         scheduled for execution
      * @throws NullPointerException if the task is null
+     *
+     *
+     * 把 Runnable 对象或 Callable 对象提交给 ExecutorService 执行（ExecutorService.submit（Runnable task）
+     * 或 ExecutorService.submit（Callable<T>task））
      */
     <T> Future<T> submit(Runnable task, T result);
 

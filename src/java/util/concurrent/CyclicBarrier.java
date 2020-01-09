@@ -135,6 +135,16 @@ import java.util.concurrent.locks.ReentrantLock;
  * @see CountDownLatch
  *
  * @author Doug Lea
+ *
+ * 可循环使用（Cyclic）屏障（Barrier）
+ * 它要做的事情是，让一组线程到达一个屏障（也可以叫同步点）时被阻塞，直到最后一个线程到达屏障时，屏障才会
+ * 开门，所有被屏障拦截的线程才会继续运行
+ *
+ * CyclicBarrier 可以用于多线程计算数据，最后合并计算结果的场景。
+ *
+ * CyclicBarrier 的计数器可以使用reset()方法重置。
+ * 所以 CyclicBarrier 能处理更为复杂的业务场景。例如，如果计算发生错误，可以重置计数
+ * 器，并让线程重新执行一次。
  */
 public class CyclicBarrier {
     /**
@@ -273,6 +283,14 @@ public class CyclicBarrier {
      * @param barrierAction the command to execute when the barrier is
      *        tripped, or {@code null} if there is no action
      * @throws IllegalArgumentException if {@code parties} is less than 1
+     *
+     *
+     * CyclicBarrier 默认构造方法是 CyclicBarrier（int parties），其参数表示屏障拦截的线程数量，
+     * 每个线程调用 await 方法告诉 CyclicBarrier 我已经到达了屏障，然后当前线程被阻塞
+     *
+     *
+     * CyclicBarrier 提供更高级的构造函数 CyclicBarrier（int parties，Runnable barrier-
+     * Action），用于在线程到达屏障时，优先执行 barrierAction，方便处理更复杂的业务场景
      */
     public CyclicBarrier(int parties, Runnable barrierAction) {
         if (parties <= 0) throw new IllegalArgumentException();
@@ -442,6 +460,7 @@ public class CyclicBarrier {
      *         barrier due to interruption or timeout since
      *         construction or the last reset, or a barrier action
      *         failed due to an exception; {@code false} otherwise.
+     *         用来了解阻塞的线程是否被中断
      */
     public boolean isBroken() {
         final ReentrantLock lock = this.lock;
@@ -478,6 +497,7 @@ public class CyclicBarrier {
      * This method is primarily useful for debugging and assertions.
      *
      * @return the number of parties currently blocked in {@link #await}
+     * 获得Cyclic-Barrier阻塞的线程数量。
      */
     public int getNumberWaiting() {
         final ReentrantLock lock = this.lock;

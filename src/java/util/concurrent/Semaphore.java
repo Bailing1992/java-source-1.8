@@ -152,10 +152,11 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
  *
  * @since 1.5
  * @author Doug Lea
- */
-/**
  *
+ * Semaphore（信号量）是用来控制同时访问特定资源的线程数量，它通过协调各个线程，以
+ * 保证合理的使用公共资源。
  *
+ * Semaphore 可以用于做流量控制，特别是公用资源有限的应用场景，比如数据库连接
  * */
 public class Semaphore implements java.io.Serializable {
     private static final long serialVersionUID = -3222578661600680210L;
@@ -311,6 +312,11 @@ public class Semaphore implements java.io.Serializable {
      * interrupted status is cleared.
      *
      * @throws InterruptedException if the current thread is interrupted
+     *
+     * Semaphore 的构造方法 Semaphore（int permits）接受一个整型的数字，表示可用的许可证数量。Semaphore（10）表示允
+     * 许10个线程获取许可证，也就是最大并发数是10。Semaphore的用法也很简单，首先线程使用
+     * Semaphore的acquire()方法获取一个许可证，使用完之后调用release()方法归还许可证。还可以
+     * 用tryAcquire()方法尝试获取许可证。
      */
     public void acquire() throws InterruptedException {
         sync.acquireSharedInterruptibly(1);
@@ -619,6 +625,7 @@ public class Semaphore implements java.io.Serializable {
      * <p>This method is typically used for debugging and testing purposes.
      *
      * @return the number of permits available in this semaphore
+     * 返回此信号量中当前可用的许可证数。
      */
     public int availablePermits() {
         return sync.getPermits();
@@ -642,6 +649,7 @@ public class Semaphore implements java.io.Serializable {
      *
      * @param reduction the number of permits to remove
      * @throws IllegalArgumentException if {@code reduction} is negative
+     * 减少reduction个许可证，是个protected方法。
      */
     protected void reducePermits(int reduction) {
         if (reduction < 0) throw new IllegalArgumentException();
@@ -666,6 +674,7 @@ public class Semaphore implements java.io.Serializable {
      *
      * @return {@code true} if there may be other threads waiting to
      *         acquire the lock
+     *         是否有线程正在等待获取许可证。
      */
     public final boolean hasQueuedThreads() {
         return sync.hasQueuedThreads();
@@ -679,6 +688,7 @@ public class Semaphore implements java.io.Serializable {
      * system state, not for synchronization control.
      *
      * @return the estimated number of threads waiting for this lock
+     * 返回正在等待获取许可证的线程数。
      */
     public final int getQueueLength() {
         return sync.getQueueLength();
@@ -693,6 +703,7 @@ public class Semaphore implements java.io.Serializable {
      * subclasses that provide more extensive monitoring facilities.
      *
      * @return the collection of threads
+     * 返回所有等待获取许可证的线程集合，是个 protected 方法。
      */
     protected Collection<Thread> getQueuedThreads() {
         return sync.getQueuedThreads();
