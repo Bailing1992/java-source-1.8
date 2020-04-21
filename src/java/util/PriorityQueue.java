@@ -518,9 +518,10 @@ public class PriorityQueue<E> extends AbstractQueue<E>
         private E lastRetElt = null;
 
         /**
-         * The modCount value that the iterator believes that the backing
+         * The modCount  value that the iterator believes that the backing
          * Queue should have.  If this expectation is violated, the iterator
-         * has detected concurrent modification.
+         * has detected 检测 concurrent modification.
+         *
          */
         private int expectedModCount = modCount;
 

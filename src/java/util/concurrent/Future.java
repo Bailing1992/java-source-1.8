@@ -93,7 +93,7 @@ package java.util.concurrent;
  * @author Doug Lea
  * @param <V> The result type returned by this Future's {@code get} method
  *
- *           Future 接口和实现 Future 接口的 FutureTask 类，代表异步计算的结果。
+ *    Future 接口和实现 Future 接口的 FutureTask 类，代表异步计算的结果。
  */
 public interface Future<V> {
 

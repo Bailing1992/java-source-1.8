@@ -182,25 +182,29 @@ import java.util.NoSuchElementException;
  * @since 1.6
  */
 
-public final class ServiceLoader<S>
-    implements Iterable<S>
+public final class ServiceLoader<S> implements Iterable<S>
 {
 
     private static final String PREFIX = "META-INF/services/";
 
     // The class or interface representing the service being loaded
+    // 代表被加载的类或者接口
     private final Class<S> service;
 
     // The class loader used to locate, load, and instantiate providers
+    // 用于定位，加载和实例化providers的类加载器
     private final ClassLoader loader;
 
     // The access control context taken when the ServiceLoader is created
+    // 创建ServiceLoader时采用的访问控制上下文
     private final AccessControlContext acc;
 
     // Cached providers, in instantiation order
+    // 缓存providers，按实例化的顺序排列
     private LinkedHashMap<String,S> providers = new LinkedHashMap<>();
 
     // The current lazy-lookup iterator
+    // 懒查找迭代器
     private LazyIterator lookupIterator;
 
     /**
